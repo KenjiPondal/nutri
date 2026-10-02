@@ -1,0 +1,33 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# One free web service serves both the built React app and the API.
+services:
+  - type: web
+    name: nutri
+    runtime: node
+    plan: free
+    region: frankfurt
+    # devDependencies (Vite) are needed to build the client, even though NODE_ENV=production
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      # Secrets: set in the Render dashboard (never committed)
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: WHOOP_CLIENT_ID
+        sync: false
+      - key: WHOOP_CLIENT_SECRET
+        sync: false
+      - key: WHOOP_REDIRECT_URI
+        sync: false

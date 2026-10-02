@@ -2,11 +2,12 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const UserSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String },
   name: { type: String, required: true },
   googleId: { type: String },
   avatar: { type: String },
+  termsAcceptedAt: { type: Date }, // accepted the disclaimer / privacy policy at sign-up
   preferences: {
     goal: { type: String, enum: ['lose', 'maintain', 'gain'], default: 'maintain' },
     calorieGoal: { type: Number, default: 2000 }, // fallback target when no Whoop data

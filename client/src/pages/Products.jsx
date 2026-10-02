@@ -13,6 +13,8 @@ export default function Products() {
         <h2>Foods</h2>
         <p className="muted small" style={{ margin: '.3rem 0 1rem' }}>Search millions of branded products, scan a barcode, or photograph a label to add one for everyone.</p>
         <ProductPicker onPick={setSelected} />
+        <p className="fineprint">Food data from <a href="https://world.openfoodfacts.org" target="_blank" rel="noreferrer">Open Food Facts</a> (ODbL)
+          and <a href="https://fdc.nal.usda.gov" target="_blank" rel="noreferrer">USDA FoodData Central</a>. <a href="/legal#data-sources">Details</a></p>
       </div>
       <div className="card">
         {!selected ? <p className="muted">Pick a food to see its nutrition and quality.</p> : (
@@ -37,6 +39,11 @@ export default function Products() {
               </tbody>
             </table>
             {selected.ingredients && <><h4>Ingredients</h4><p className="small">{selected.ingredients}</p></>}
+            {selected.source === 'openfoodfacts' && selected.barcode && (
+              <p className="fineprint">Source: <a href={`https://world.openfoodfacts.org/product/${selected.barcode}`} target="_blank" rel="noreferrer">Open Food Facts</a> (ODbL). Check the package if something looks off.</p>
+            )}
+            {selected.source === 'usda' && <p className="fineprint">Source: USDA FoodData Central (public domain).</p>}
+            {(selected.source === 'user' || selected.source === 'label') && <p className="fineprint">Added by a Nutri user, not verified. Check the package if something looks off.</p>}
           </div>
         )}
       </div>

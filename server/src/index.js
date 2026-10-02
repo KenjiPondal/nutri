@@ -17,6 +17,7 @@ import dishRoutes from './routes/dishes.js';
 import objectiveRoutes from './routes/objectives.js';
 import { startWhoopScheduler } from './services/whoopSync.js';
 import { whoopConfigured } from './services/whoopClient.js';
+import { sanitize, apiLimiter, securityHeaders } from './middleware/security.js';
 
 const PROD = process.env.NODE_ENV === 'production';
 
@@ -33,8 +34,11 @@ const DIST = join(__dirname, '../../client/dist');
 
 app.set('trust proxy', 1); // behind Render's / Cloudflare's HTTPS proxy
 app.disable('x-powered-by');
+if (PROD) app.use(securityHeaders);
 app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173' }));
 app.use(express.json({ limit: '1mb' }));
+app.use(sanitize);
+app.use('/api', apiLimiter);
 app.use(morgan(PROD ? 'tiny' : 'dev'));
 app.use(passport.initialize());
 

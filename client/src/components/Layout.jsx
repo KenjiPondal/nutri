@@ -30,6 +30,8 @@ export default function Layout() {
               <div className="menu" onClick={() => setMenu(false)}>
                 <p className="menu-name">{user?.name}<span>{user?.email}</span></p>
                 <Link to="/goals">Goals & targets</Link>
+                <Link to="/account">Account & data</Link>
+                <Link to="/legal">Legal & privacy</Link>
                 <button onClick={() => { logout(); navigate('/login'); }}>Log out</button>
               </div>
             </>

@@ -9,5 +9,21 @@ const getSecret = () => {
   return secret;
 };
 
-export const signToken = (userId) => jwt.sign({ id: userId }, getSecret(), { expiresIn: '7d' });
-export const verifyToken = (token) => jwt.verify(token, getSecret());
+// HS256 pinned so a token can't pick its own algorithm.
+const OPTS = { algorithm: 'HS256', expiresIn: '7d' };
+
+export const signToken = (userId) => jwt.sign({ id: String(userId) }, getSecret(), OPTS);
+
+/**
+ * Verify with the current secret; during a rotation also accept JWT_SECRET_PREVIOUS
+ * so people aren't logged out the moment the secret changes (old tokens expire within 7 days).
+ */
+export const verifyToken = (token) => {
+  try {
+    return jwt.verify(token, getSecret(), { algorithms: ['HS256'] });
+  } catch (e) {
+    const prev = process.env.JWT_SECRET_PREVIOUS;
+    if (prev && e.name === 'JsonWebTokenError') return jwt.verify(token, prev, { algorithms: ['HS256'] });
+    throw e;
+  }
+};

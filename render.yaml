@@ -31,3 +31,6 @@ services:
         sync: false
       - key: WHOOP_REDIRECT_URI
         sync: false
+      # Invite list: comma-separated emails allowed to create an account (sign-up is closed otherwise)
+      - key: ALLOWED_EMAILS
+        sync: false

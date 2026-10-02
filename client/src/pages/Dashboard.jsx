@@ -135,6 +135,7 @@ export default function Dashboard() {
             ))}
           </ul>
           {fuel.inProgress && <Link className="btn small" to="/nutrition">Log food</Link>}
+          <p className="fineprint">General guidance, not medical advice. <Link to="/legal">Learn more</Link></p>
         </section>
       )}
 

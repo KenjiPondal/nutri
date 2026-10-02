@@ -8,6 +8,8 @@ import Nutrition from './pages/Nutrition';
 import Products from './pages/Products';
 import Meals from './pages/Meals';
 import Goals from './pages/Goals';
+import Legal from './pages/Legal';
+import Account from './pages/Account';
 import Layout from './components/Layout';
 
 function ProtectedRoute({ children }) {
@@ -23,11 +25,13 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/oauth-callback" element={<OAuthCallback />} />
+        <Route path="/legal" element={<Legal />} />
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="nutrition" element={<Nutrition />} />
           <Route path="meals" element={<Meals />} />
           <Route path="goals" element={<Goals />} />
+          <Route path="account" element={<Account />} />
           <Route path="products" element={<Products />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

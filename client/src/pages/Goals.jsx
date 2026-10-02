@@ -94,7 +94,12 @@ function NewObjective({ existing, latestKg, onDone }) {
         <label className="full">Why does this matter to you? <span className="unit">optional</span>
           <input maxLength={200} value={f.why || ''} onChange={set('why')} placeholder="e.g. More energy for my kids" /></label>
       </div>
-      {type === 'weight' && <p className="dim small" style={{ marginTop: '.6rem' }}>We cap the pace at a safe rate (max ~1% of body weight per week when losing, 0.5 kg when gaining) and never set your intake below 1,200 kcal.</p>}
+      {type === 'weight' && (
+        <p className="dim small" style={{ marginTop: '.6rem' }}>
+          We cap the pace at a conservative rate (max ~1% of body weight per week when losing, 0.5 kg when gaining) and never set intake below 1,200 kcal.
+          This is general guidance, not medical advice. Check with a doctor first if you're pregnant, under 18, have a medical condition, or have a history of disordered eating.
+        </p>
+      )}
       <div className="row"><button className="btn" onClick={save}>Set goal</button></div>
     </div>
   );

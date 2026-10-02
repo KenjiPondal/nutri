@@ -26,13 +26,49 @@ function clean(text) {
     .filter(Boolean);
 }
 
+const NUTRIENT = /energ|calor|kcal|\bfat\b|grasa|l[ií]pid|satur|carbo|hidrato|sugar|az[uú]car|fib(re|er|ra)|prote|\bsalt\b|^sal\b|sodium|sodio/;
+const UNITS = /kj|kcal|mg|ml|g|%/g;
+const isValueOnly = (l) => /\d/.test(l) && !/[a-zñáéíóú]/.test(l.replace(UNITS, ''));
+
+/**
+ * iPhone Live Text / pasted text often loses the table shape:
+ *  - everything on one line ("Energy 636 kcal Fat 53 g of which saturates 10 g ...")
+ *  - or a column of names followed by a column of values.
+ * Rebuild one "name value" per line so the line parser below works.
+ */
+function restructure(text) {
+  let lines = text.replace(/\r/g, '').split('\n').map(l => l.trim()).filter(Boolean);
+  // 1) Few, long lines: split before each nutrient name.
+  if (lines.length < 5 && text.length > 40) {
+    const split = /(?<!of which |de las cuales |de los cuales |dont |saturated |trans |total )\b(energy|energ[ií]a|valor energ[eé]tico|calories|total fat|fat|grasas|lipides|of which|de las cuales|de los cuales|saturated|carbohydrates?|total carb\w*|hidratos|fib(?:re|er|ra)\b|dietary fiber|proteins?|prote[ií]nas|salt|\bsal\b|sodium|sodio|total sugars|cholesterol)/gi;
+    lines = lines.flatMap(l => l.replace(split, '\n$1').split('\n')).map(l => l.trim()).filter(Boolean);
+  }
+  // 2) Columns: names without numbers, values without names, in the same order.
+  const low = lines.map(l => l.toLowerCase());
+  // Join "2635 kJ" + "636 kcal" value lines so energy counts as one value
+  const vals = [];
+  low.forEach((l, i) => { if (isValueOnly(l)) vals.push(i); });
+  const merged = [];
+  for (let k = 0; k < vals.length; k++) {
+    const a = low[vals[k]], b = low[vals[k + 1]];
+    if (/kj/.test(a) && !/kcal/.test(a) && b && /kcal/.test(b) && vals[k + 1] === vals[k] + 1) { merged.push(`${a} / ${b}`); k++; }
+    else merged.push(a);
+  }
+  const names = low.map((l, i) => [l, i]).filter(([l]) => NUTRIENT.test(l) && !/\d/.test(l));
+  if (names.length >= 2 && merged.length >= names.length) {
+    const rest = low.filter((l, i) => !isValueOnly(l) && !names.some(([, j]) => j === i));
+    return [...rest, ...names.map(([l], k) => `${l} ${merged[k]}`)].join('\n');
+  }
+  return lines.join('\n');
+}
+
 function firstNum(line, re) {
   const m = line.match(re);
   return m ? parseFloat(m[m.length - 1]) : undefined;
 }
 
 export function parseLabel(text) {
-  const lines = clean(text);
+  const lines = clean(restructure(String(text || '')));
   const all = lines.join('\n');
   const out = {};
   const pick = (key, value) => { if (value != null && !Number.isNaN(value) && out[key] == null) out[key] = value; };

@@ -11,7 +11,7 @@ export default function Products() {
     <div className="split">
       <div className="card">
         <h2>Foods</h2>
-        <p className="muted small" style={{ margin: '.3rem 0 1rem' }}>Search millions of branded products, scan a barcode, or photograph a label to add one for everyone.</p>
+        <p className="muted small" style={{ margin: '.3rem 0 1rem' }}>Search millions of branded products, scan a barcode, or scan a nutrition label to add one for everyone.</p>
         <ProductPicker onPick={setSelected} />
         <p className="fineprint">Food data from <a href="https://world.openfoodfacts.org" target="_blank" rel="noreferrer">Open Food Facts</a> (ODbL)
           and <a href="https://fdc.nal.usda.gov" target="_blank" rel="noreferrer">USDA FoodData Central</a>. <a href="/legal#data-sources">Details</a></p>

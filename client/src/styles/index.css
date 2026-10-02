@@ -357,3 +357,6 @@ label.check.terms a{color:var(--text)}
 .input-action{display:flex;gap:.4rem;align-items:center}
 .input-action input{flex:1;min-width:0}
 .inline-scanner{margin:.2rem 0 .9rem}
+.label-scan.open{background:var(--surface-2);border-radius:14px;padding:.9rem;display:flex;flex-direction:column;gap:.5rem}
+.label-scan.open textarea{background:var(--surface);font-size:16px}
+.label-scan .row{justify-content:space-between;margin-top:0}

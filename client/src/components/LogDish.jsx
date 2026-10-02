@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { errMsg, today } from '../services/api';
 import { logDish, noonISO, addDays } from '../services/dishes';
+import DecimalInput from './DecimalInput';
 
 const MEALS = ['breakfast', 'lunch', 'dinner', 'snack'];
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']; // Monday-first
@@ -67,7 +68,7 @@ export default function LogDish({ dish, defaultMeal = 'lunch', defaultDate = tod
           </div>
         ) : null}
         {byWeight ? (
-          <div className="input-unit"><input type="number" min="1" inputMode="decimal" value={grams} onChange={(e) => setGrams(e.target.value)} placeholder="on your plate" /><span>g</span></div>
+          <div className="input-unit"><DecimalInput min="1" inputMode="decimal" value={grams} onChange={(e) => setGrams(e.target.value)} placeholder="on your plate" /><span>g</span></div>
         ) : (
           <div className="stepper">
             <button type="button" onClick={() => setPortions(p => Math.max(0.5, p - 0.5))} aria-label="Less">−</button>

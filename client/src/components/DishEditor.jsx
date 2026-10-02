@@ -3,6 +3,7 @@ import { errMsg } from '../services/api';
 import { saveDish, sumIngredients } from '../services/dishes';
 import ProductPicker, { NovaChip } from './ProductPicker';
 import QuantityInput from './QuantityInput';
+import DecimalInput from './DecimalInput';
 
 const r = (n) => Math.round(n);
 
@@ -79,7 +80,7 @@ export default function DishEditor({ initial = {}, onSaved, onCancel }) {
           </div>
         </label>
         <label>Cooked weight <span className="unit">optional</span>
-          <div className="input-unit"><input type="number" min="0" inputMode="decimal" value={cookedWeight} onChange={(e) => setCookedWeight(e.target.value)} placeholder="Weigh the batch" /><span>g</span></div>
+          <div className="input-unit"><DecimalInput min="0" inputMode="decimal" value={cookedWeight} onChange={(e) => setCookedWeight(e.target.value)} placeholder="Weigh the batch" /><span>g</span></div>
         </label>
       </div>
       {cookedWeight > 0 && <p className="dim small" style={{ marginTop: '.4rem' }}>You'll be able to log by weight: one portion ≈ {r(cookedWeight / n)} g.</p>}
@@ -94,7 +95,7 @@ export default function DishEditor({ initial = {}, onSaved, onCancel }) {
             </div>
             <div className="row-inline">
               <div className="input-unit sm">
-                <input type="number" min="0" inputMode="decimal" value={i.grams} aria-label="Grams" onFocus={(e) => e.target.select()}
+                <DecimalInput min="0" inputMode="decimal" value={i.grams} aria-label="Grams" onFocus={(e) => e.target.select()}
                   onChange={(e) => setIngredients(list => list.map((x, j) => (j === idx ? { ...x, grams: Number(e.target.value), portionText: undefined } : x)))} />
                 <span>{i.product.servingUnit || 'g'}</span>
               </div>

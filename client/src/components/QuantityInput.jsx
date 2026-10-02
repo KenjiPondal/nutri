@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import DecimalInput from './DecimalInput';
 
 const fmt = (n) => String(Math.round(n * 10) / 10);
 
@@ -25,7 +26,7 @@ export default function QuantityInput({ product, initialGrams, onChange, autoFoc
       <div className="qty-main">
         <button type="button" className="qty-step" onClick={() => step(-10)} aria-label="Less">−</button>
         <div className="qty-field">
-          <input type="number" inputMode="decimal" min="0" step="any" value={grams} autoFocus={autoFocus}
+          <DecimalInput inputMode="decimal" min="0" step="any" value={grams} autoFocus={autoFocus}
             onChange={(e) => { setChip(null); setGrams(e.target.value); }} onFocus={(e) => e.target.select()} aria-label={`Amount in ${unit}`} />
           <span>{unit}</span>
         </div>

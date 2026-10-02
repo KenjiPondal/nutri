@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import api, { errMsg } from '../services/api';
 import LabelScanner from './LabelScanner';
+import BarcodeScanner from './BarcodeScanner';
+import DecimalInput from './DecimalInput';
 
 const FIELDS = [
   ['calories', 'Calories', 'kcal'], ['protein', 'Protein', 'g'], ['carbs', 'Carbs', 'g'], ['sugar', 'of which sugar', 'g'],
@@ -27,7 +29,16 @@ export default function ProductForm({ initial = {}, onSaved, onCancel }) {
   const [fromLabel, setFromLabel] = useState(false);
   const [highlight, setHighlight] = useState([]);
   const [error, setError] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const [existing, setExisting] = useState(null); // product already in the DB with this barcode
   const set = (k) => (e) => setP({ ...p, [k]: e.target.value });
+
+  // Scan instead of typing: avoids typos. If the barcode is already known, offer that product instead of a duplicate.
+  const onScanned = async (code) => {
+    setScanning(false); setExisting(null);
+    setP(prev => ({ ...prev, barcode: code }));
+    try { const r = await api.get(`/products/barcode/${code}`); setExisting(r.data); } catch { /* not known yet: keep filling the form */ }
+  };
 
   const onParsed = (fields, found) => {
     setP(prev => ({ ...prev, ...Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, String(v)])) }));
@@ -54,16 +65,29 @@ export default function ProductForm({ initial = {}, onSaved, onCancel }) {
     <form className="product-form" onSubmit={submit}>
       <LabelScanner onParsed={onParsed} />
       {error && <div className="error">{error}</div>}
+      {scanning && <div className="inline-scanner"><BarcodeScanner manualEntry={false} onDetected={onScanned} onClose={() => setScanning(false)} /></div>}
+      {existing && (
+        <div className="info">
+          <b>{existing.name}</b>{existing.brand && existing.brand !== 'Generic' ? ` · ${existing.brand}` : ''} is already in the database with this barcode.
+          <div className="row"><button type="button" className="btn small" onClick={() => onSaved?.(existing)}>Use it</button>
+            <button type="button" className="btn small secondary" onClick={() => setExisting(null)}>Dismiss</button></div>
+        </div>
+      )}
       <div className="grid2">
         <label>Name<input value={p.name} onChange={set('name')} required placeholder="e.g. Smooth Peanut Butter" /></label>
         <label>Brand<input value={p.brand} onChange={set('brand')} placeholder="e.g. Skippy" /></label>
-        <label>Barcode<input value={p.barcode} onChange={set('barcode')} inputMode="numeric" /></label>
+        <label>Barcode
+          <div className="input-action">
+            <input value={p.barcode} onChange={(e) => setP({ ...p, barcode: e.target.value.replace(/\D/g, '') })} inputMode="numeric" placeholder="Scan or type" />
+            <button type="button" className="btn small secondary" onClick={() => setScanning(s => !s)} aria-label="Scan barcode">{scanning ? 'Close' : 'Scan'}</button>
+          </div>
+        </label>
         <label>Food group<select value={p.foodGroup} onChange={set('foodGroup')} required>
           <option value="">Choose…</option>{FOOD_GROUPS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
         <label>How processed?<select value={p.novaGroup} onChange={set('novaGroup')}>
           {NOVA.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
         <div className="grid2 tight">
-          <label className={hl('servingSize')}>Per<input type="number" min="1" step="any" value={p.servingSize} onChange={set('servingSize')} /></label>
+          <label className={hl('servingSize')}>Per<DecimalInput min="1" step="any" value={p.servingSize} onChange={set('servingSize')} /></label>
           <label>Unit<select value={p.servingUnit} onChange={set('servingUnit')}><option>g</option><option>ml</option></select></label>
         </div>
       </div>
@@ -71,7 +95,7 @@ export default function ProductForm({ initial = {}, onSaved, onCancel }) {
       <div className="grid4">
         {FIELDS.map(([k, label, unit]) => (
           <label key={k} className={hl(k)}><span>{label} <span className="unit">{unit}</span></span>
-            <input type="number" min="0" step="any" value={p[k]} onChange={set(k)} required={k === 'calories'} />
+            <DecimalInput min="0" step="any" value={p[k]} onChange={set(k)} required={k === 'calories'} />
           </label>
         ))}
       </div>

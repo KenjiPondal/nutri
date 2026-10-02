@@ -5,6 +5,7 @@ import api, { errMsg, today } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { listObjectives, createObjective, removeObjective, listWeighIns, addWeighIn, OBJECTIVES } from '../services/objectives';
 import { Sheet } from './Meals';
+import DecimalInput from '../components/DecimalInput';
 
 ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler);
 
@@ -66,7 +67,7 @@ function NewObjective({ existing, latestKg, onDone }) {
 
   // Plain render helpers (not components) so inputs keep focus while typing.
   const num = ({ k, label, unit, min, max, step = 1 }) => (
-    <label key={k}>{label}<div className="input-unit"><input type="number" inputMode="decimal" min={min} max={max} step={step} value={f[k] ?? ''} onChange={set(k)} /><span>{unit}</span></div></label>
+    <label key={k}>{label}<div className="input-unit"><DecimalInput inputMode="decimal" min={min} max={max} step={step} value={f[k] ?? ''} onChange={set(k)} /><span>{unit}</span></div></label>
   );
   const days = () => (
     <label key="days">Days per week
@@ -164,7 +165,7 @@ export default function Goals() {
         <section className="card">
           <div className="card-head"><h3>Weight</h3>{latest && <span className="dim small">last: {latest.kg} kg · {latest.date === today() ? 'today' : latest.date}</span>}</div>
           <form className="weigh-form" onSubmit={logWeight}>
-            <div className="input-unit"><input type="number" inputMode="decimal" step="0.1" min="20" max="400" placeholder={latest ? String(latest.kg) : 'Weight'} value={kg} onChange={(e) => setKg(e.target.value)} /><span>kg</span></div>
+            <div className="input-unit"><DecimalInput inputMode="decimal" step="0.1" min="20" max="400" placeholder={latest ? String(latest.kg) : 'Weight'} value={kg} onChange={(e) => setKg(e.target.value)} /><span>kg</span></div>
             <button className="btn" disabled={!kg}>Log weight</button>
           </form>
           {weighIns.length > 1 && (
@@ -188,7 +189,7 @@ export default function Goals() {
         <div className="card-head"><h3>Daily targets</h3>{saved && <span className="good small">{saved}</span>}</div>
         <form className="goals-form" onSubmit={saveTargets}>
           {[['proteinGoal', 'Protein', 'g'], ['carbGoal', 'Carbs', 'g'], ['fatGoal', 'Fat', 'g'], ['calorieGoal', 'Calories without Whoop', 'kcal']].map(([k, l, u]) => (
-            <label key={k}>{l}<div className="input-unit"><input type="number" min="0" value={targets[k] ?? ''} onChange={(e) => setTargets({ ...targets, [k]: e.target.value })} /><span>{u}</span></div></label>
+            <label key={k}>{l}<div className="input-unit"><DecimalInput min="0" value={targets[k] ?? ''} onChange={(e) => setTargets({ ...targets, [k]: e.target.value })} /><span>{u}</span></div></label>
           ))}
           {!weightObj && (
             <label className="full">Calorie direction

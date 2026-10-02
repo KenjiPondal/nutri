@@ -352,3 +352,8 @@ label.check.terms a{color:var(--text)}
 .danger-zone h3{color:var(--poor)}
 .btn.danger-solid{background:var(--poor);color:#1d0c07}
 .delete-form{display:flex;flex-direction:column;gap:.7rem}
+
+/* input with an inline action button (e.g. barcode + Scan) */
+.input-action{display:flex;gap:.4rem;align-items:center}
+.input-action input{flex:1;min-width:0}
+.inline-scanner{margin:.2rem 0 .9rem}

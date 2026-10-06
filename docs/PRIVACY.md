@@ -18,6 +18,7 @@ Only to show you your own data: dashboards, charts, and comparisons between your
 ## Third parties
 - **WHOOP:** we read your data through WHOOP's official API, only after you authorize it. You can disconnect at any time.
 - **Open Food Facts:** when you search brands or scan an unknown barcode, the search text or barcode (nothing about you) is sent to Open Food Facts. Branded product data is from Open Food Facts under the Open Database License (ODbL); generic foods are from USDA FoodData Central (public domain).
+- **Google Gemini (AI):** when you describe a meal in words, that text and candidate food names are sent to Google's Gemini API to interpret it. Nothing else about you is sent.
 - **Hosting:** Render (application) and MongoDB Atlas (database).
 - **Google:** only if you choose "Continue with Google" to sign in.
 

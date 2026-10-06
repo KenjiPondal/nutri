@@ -28,13 +28,20 @@ export default function QuickLog({ date, onLogged }) {
     try {
       const r = (await api.post('/nutrition/parse', { text })).data;
       if (!r.items.length) { setError("I couldn't find any foods in that. Try e.g. “2 eggs, toast and a coffee”."); return; }
-      setItems(r.items);
+      setItems(r.items); setEngine(r.engine);
       if (r.minutes != null) setTime(toHM(r.minutes));
       setMeal(r.suggestedMeal || mealForHour(Number((r.minutes != null ? toHM(r.minutes) : time).split(':')[0])));
     } catch (e) { setError(errMsg(e)); }
     finally { setBusy(false); }
   };
 
+  // Brand suggestions from Open Food Facts aren't saved yet: import on pick
+  const useAlt = async (i, a) => {
+    let p = a;
+    if (!a._id && a.barcode) { try { p = (await api.get(`/products/barcode/${a.barcode}`)).data; } catch (e) { setError(errMsg(e)); return; } }
+    setItems(list => list.map((x, j) => (j === i ? { ...x, product: p, alternatives: [x.product, ...x.alternatives.filter(y => y !== a)].filter(Boolean) } : x)));
+  };
+  const [engine, setEngine] = useState(null);
   const update = (i, patch) => setItems(list => list.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   const ready = items?.filter(i => (i.kind === 'dish') || (i.product && Number(i.grams) > 0)) || [];
   const total = ready.reduce((a, i) => a + (i.kind === 'food' ? kcalOf(i.product, Number(i.grams)) : 0), 0);
@@ -74,7 +81,7 @@ export default function QuickLog({ date, onLogged }) {
       ) : (
         <>
           <div className="ql-head">
-            <p className="dim small">“{text}”</p>
+            <p className="dim small">“{text}”{engine === 'ai' && <span className="ai-tag">AI</span>}</p>
             <button className="link" onClick={() => setItems(null)}>Edit</button>
           </div>
           <ul className="ql-items">
@@ -85,11 +92,11 @@ export default function QuickLog({ date, onLogged }) {
                     <><strong>{it.dish.name}</strong> <span className="chip meal-chip">meal</span><div className="dim small">from your saved meals</div></>
                   ) : it.product ? (
                     <>
-                      <button className="ql-name" onClick={() => setSwap(i)}><strong>{it.product.name}</strong> <span className="dim">▾</span></button>
+                      <button className="ql-name" onClick={() => setSwap(i)}><strong>{it.product.name}</strong>{it.product.brand && it.product.brand !== 'Generic' && <span className="muted"> · {it.product.brand}</span>} <span className="dim">▾</span></button>
                       <div className="dim small">“{it.food}” · {kcalOf(it.product, Number(it.grams))} kcal <NovaChip nova={it.product.novaGroup} /></div>
                       {it.alternatives?.length > 0 && (
                         <div className="ql-alts">{it.alternatives.slice(0, 2).map(a => (
-                          <button key={a._id} onClick={() => update(i, { product: a, alternatives: [it.product, ...it.alternatives.filter(x => x._id !== a._id)] })}>{a.name.length > 34 ? a.name.slice(0, 33) + '…' : a.name}</button>
+                          <button key={a._id || a.barcode} onClick={() => useAlt(i, a)}>{a.name.length > 30 ? a.name.slice(0, 29) + '…' : a.name}{a.brand && a.brand !== 'Generic' ? ` · ${a.brand}` : ''}</button>
                         ))}</div>
                       )}
                     </>

@@ -34,3 +34,6 @@ services:
       # Invite list: comma-separated emails allowed to create an account (sign-up is closed otherwise)
       - key: ALLOWED_EMAILS
         sync: false
+      # Optional: AI meal understanding (Google Gemini). Without it, the rule-based parser is used.
+      - key: GEMINI_API_KEY
+        sync: false

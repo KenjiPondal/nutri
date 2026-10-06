@@ -6,6 +6,7 @@ import NutritionEntry from '../models/NutritionEntry.js';
 import Dish from '../models/Dish.js';
 import { searchFoods } from './foodSearch.js';
 import Product from '../models/Product.js';
+import { searchOff, importFromOff } from './openFoodFacts.js';
 
 const WORD_NUM = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
   half: 0.5, quarter: 0.25, couple: 2, few: 3, un: 1, una: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, medio: 0.5, media: 0.5 };
@@ -46,7 +47,7 @@ const ES = { huevos: 'egg', huevo: 'egg', 'plátano': 'banana', platano: 'banana
   yogur: 'yogurt', queso: 'cheese', 'aceite de oliva': 'olive oil', aceite: 'olive oil', aguacate: 'avocado', tomate: 'tomato', lechuga: 'lettuce',
   ensalada: 'salad', patata: 'potato', patatas: 'potato', papas: 'potato', 'brócoli': 'broccoli', brocoli: 'broccoli', zanahoria: 'carrot',
   lentejas: 'lentils', garbanzos: 'chickpeas', almendras: 'almonds', nueces: 'walnuts', 'café': 'coffee', cafe: 'coffee', cerveza: 'beer', vino: 'wine', agua: 'water' };
-const translate = (food) => ES[food] || food.split(' ').map(w => ES[w] || w).join(' ');
+export const translate = (food) => ES[food] || food.split(' ').map(w => ES[w] || w).join(' ');
 
 // Everyday words -> the plain food people almost always mean (exact USDA/seed names)
 const PREFER = [
@@ -105,18 +106,33 @@ export function splitFoods(text) {
   for (let raw of parts) {
     let s = ` ${raw} `.replace(/\b(\d+(?:\.\d+)?)(g|gr|kg|ml|l|oz|lb)\b/g, '$1 $2');
     let quantity = null, unit = null;
-    const num = s.match(/(?:^|\s)(\d+(?:\.\d+)?|\d+\/\d+)(?=\s)/);
-    if (num) { quantity = num[1].includes('/') ? Number(num[1].split('/')[0]) / Number(num[1].split('/')[1]) : Number(num[1]); s = s.replace(num[0], ' '); }
-    else {
-      const w = s.match(new RegExp(`\\b(${Object.keys(WORD_NUM).join('|')})\\b`));
-      if (w) { quantity = WORD_NUM[w[1]]; s = s.replace(w[0], ' '); }
+    // "200 g", "1.5 cups", "2 tbsp" anywhere in the phrase (number directly followed by a unit)
+    const unitWords = 'g|gr|grs|grams?|gramos?|kg|kilos?|ml|l|liters?|litres?|litros?|oz|ounces?|lb|lbs|pounds?|cups?|tazas?|tbsp|tablespoons?|cucharadas?|tsp|teaspoons?|cucharaditas?|slices?|rebanadas?|lonchas?|pieces?|piezas?|trozos?|servings?|portions?|bowls?|plates?|platos?|glass(?:es)?|vasos?|cans?|latas?|handfuls?|scoops?|cazos?|bars?';
+    const nu = s.match(new RegExp(`(?:^|\\s)(\\d+(?:\\.\\d+)?|\\d+/\\d+)\\s+(${unitWords})(?=\\s)`));
+    if (nu) {
+      quantity = nu[1].includes('/') ? Number(nu[1].split('/')[0]) / Number(nu[1].split('/')[1]) : Number(nu[1]);
+      unit = UNITS.find(([re]) => re.test(nu[2]))[1];
+      s = s.replace(nu[0], ' ');
+    } else {
+      const num = s.match(/(?:^|\s)(\d+(?:\.\d+)?|\d+\/\d+)(?=\s)/);
+      if (num) { quantity = num[1].includes('/') ? Number(num[1].split('/')[0]) / Number(num[1].split('/')[1]) : Number(num[1]); s = s.replace(num[0], ' '); }
+      else {
+        const w = s.match(new RegExp(`\\b(${Object.keys(WORD_NUM).join('|')})\\b`));
+        if (w) { quantity = WORD_NUM[w[1]]; s = s.replace(w[0], ' '); }
+      }
     }
     const words = s.split(/\s+/).filter(Boolean);
-    const ui = words.findIndex(w => UNITS.some(([re]) => re.test(w)));
-    if (ui !== -1 && ui <= 1) { unit = UNITS.find(([re]) => re.test(words[ui]))[1]; words.splice(ui, 1); }
-    const food = words.join(' ').replace(FILLER, ' ').replace(/[^\p{L}\p{N}\s%-]/gu, ' ').replace(/\s+/g, ' ').trim();
+    if (!unit) {
+      const ui = words.findIndex(w => UNITS.some(([re]) => re.test(w)));
+      if (ui !== -1 && ui <= 1) { unit = UNITS.find(([re]) => re.test(words[ui]))[1]; words.splice(ui, 1); }
+    }
+    // "hsn brand", "brand hsn", "marca hsn", "from hsn" -> brand
+    let brand = null, rest = words.join(' ');
+    const bm = rest.match(/\b(?:brand|marca|by|from|de la marca)\s+([\p{L}\p{N}'&!.-]+)/u) || rest.match(/\b([\p{L}\p{N}'&!.-]+)\s+(?:brand|marca)\b/u);
+    if (bm) { brand = bm[1]; rest = rest.replace(bm[0], ' '); }
+    const food = rest.replace(FILLER, ' ').replace(/[^\p{L}\p{N}\s%-]/gu, ' ').replace(/\s+/g, ' ').trim();
     if (food.length < 2) continue;
-    items.push({ text: raw.trim(), food, quantity, unit });
+    items.push({ text: raw.trim(), food, brand, quantity, unit });
   }
   return { items: items.slice(0, 20), minutes: time?.minutes ?? null, meal };
 }
@@ -148,32 +164,83 @@ export function gramsFor(item, product) {
   return { grams: q * g, portion: `${+q.toFixed(2)} × ${each ? 'item' : p?.label || '100 g'}` };
 }
 
-/** Full parse: split, then match each item against your saved meals and the food database. */
-export async function parseMeal(text, userId) {
-  const { items, minutes, meal } = splitFoods(String(text).slice(0, 1000));
+const tokens = (s) => translate(String(s || '').toLowerCase()).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .split(/[^a-z0-9]+/).filter(w => w.length > 1 && !/^(of|the|and|with|de|la|el|raw|g|ml)$/.test(w)).map(stem);
+const LEAN = 'name brand servingSize servingUnit calories protein carbs fat fiber sugar saturatedFat sodium foodGroup novaGroup portions barcode source';
+
+/** Everything matching needs about a user: foods they've logged, their saved meals. */
+export async function loadParseContext(userId) {
   const uid = new mongoose.Types.ObjectId(String(userId));
   const [usedIds, dishes] = await Promise.all([
-    NutritionEntry.distinct('product', { user: uid, product: { $ne: null }, date: { $gte: new Date(Date.now() - 120 * 86400000) } }),
+    NutritionEntry.distinct('product', { user: uid, product: { $ne: null }, date: { $gte: new Date(Date.now() - 180 * 86400000) } }),
     Dish.find({ user: uid }, 'name portions').lean()
   ]);
-  const boost = new Set(usedIds.map(String));
+  const history = await Product.find({ _id: { $in: usedIds } }, LEAN).lean();
+  const own = await Product.find({ createdBy: uid }, LEAN).lean();
+  const seen = new Set(); const mine = [...history, ...own].filter(p => !seen.has(String(p._id)) && seen.add(String(p._id)));
+  return { userId, boost: new Set(usedIds.map(String)), history: mine, dishes };
+}
+
+/**
+ * Candidate products for one food mention, best first:
+ * your own history (word overlap on name + brand), the local database, and Open Food Facts when a brand is named.
+ */
+export async function candidatesFor({ food, brand }, ctx, { external = true } = {}) {
+  const want = tokens(`${food} ${brand || ''}`);
+  const scored = ctx.history.map(p => {
+    const have = new Set(tokens(`${p.name} ${p.brand || ''}`));
+    const hit = want.filter(w => have.has(w) || [...have].some(h => h.startsWith(w) || w.startsWith(h))).length;
+    const brandHit = brand && tokens(brand).some(b => tokens(p.brand || p.name).includes(b));
+    return [hit / Math.max(1, want.length) + (brandHit ? 0.5 : 0), p];
+  }).filter(([s]) => s >= 0.5).sort((a, b) => b[0] - a[0]).map(([, p]) => p);
+
+  const q = translate(food).split(' ').map(stem).join(' ');
+  const local = await searchFoods(q, ctx.userId, { boost: ctx.boost, limit: 6 });
+  const pref = PREFER.find(([re]) => re.test(translate(food)));
+  if (pref) { const best = await Product.findOne({ name: pref[1] }, LEAN).lean(); if (best) local.unshift(best); }
+  let branded = [];
+  if (brand) {
+    branded = await searchFoods(`${brand} ${q}`, ctx.userId, { boost: ctx.boost, limit: 4 });
+    if (external) branded = [...branded, ...(await searchOff(`${brand} ${translate(food)}`, 5))];
+    const bt = tokens(brand);
+    const keep = (list) => list.filter(p => bt.some(b => tokens(`${p.brand || ''} ${p.name}`).includes(b)));
+    branded = keep(branded);
+    if (!branded.length && external) branded = keep(await searchOff(brand, 10));   // e.g. "hsn" alone
+  } else if (external && !scored.length && (!local.length || !tokens(local[0].name).includes(stem(translate(food).split(' ').at(-1) || '')))) {
+    branded = await searchOff(translate(food), 5);                                    // "hsn evowhey": not in the local DB
+  }
+  const out = [], ids = new Set();
+  for (const p of [...scored.slice(0, 3), ...branded, ...local]) {
+    const id = p._id ? String(p._id) : `off:${p.barcode}`;
+    if (!ids.has(id)) { ids.add(id); out.push(p); }
+  }
+  return out.slice(0, 8);
+}
+
+/** Make sure a chosen Open Food Facts result is saved locally (so it has an _id). */
+export async function materialize(p) {
+  if (!p || p._id || !p.barcode) return p;
+  const saved = await importFromOff(p.barcode);
+  return saved ? saved.toObject?.() ?? saved : null;
+}
+
+export function findDish(food, ctx) {
+  const f = food.toLowerCase();
+  return ctx.dishes.find(d => { const n = d.name.toLowerCase(); return n.length > 2 && (f.includes(n) || n.includes(f)); });
+}
+
+/** Rule-based parse (also the fallback when AI is unavailable). */
+export async function parseMeal(text, userId, ctx) {
+  ctx ||= await loadParseContext(userId);
+  const { items, minutes, meal } = splitFoods(String(text).slice(0, 1000));
   const out = [];
   for (const it of items) {
-    // A saved meal named like this? ("my yakisoba prep")
-    const dish = dishes.find(d => { const n = d.name.toLowerCase(); return n.length > 2 && (it.food.includes(n) || n.includes(it.food)); });
+    const dish = findDish(it.food, ctx);
     if (dish) { out.push({ ...it, kind: 'dish', dish: { _id: dish._id, name: dish.name }, portions: it.quantity || 1 }); continue; }
-    const food = translate(it.food);
-    const q = food.split(' ').map(stem).join(' ');
-    let found = await searchFoods(q, userId, { boost, limit: 5 });
-    const pref = PREFER.find(([re]) => re.test(food));
-    // Something you've logged before always wins; otherwise use the everyday default
-    if (pref && !(found[0] && boost.has(String(found[0]._id)))) {
-      const best = await Product.findOne({ name: pref[1] }).lean();
-      if (best) found = [best, ...found.filter(f => String(f._id) !== String(best._id))];
-    }
-    const product = found[0] || null;
+    const cands = await candidatesFor(it, ctx);
+    const product = await materialize(cands[0]) || null;
     const { grams, portion } = gramsFor(it, product);
-    out.push({ ...it, kind: 'food', product, alternatives: found.slice(1), grams: Math.round(grams * 10) / 10, portion });
+    out.push({ ...it, kind: 'food', product, alternatives: cands.slice(1), grams: Math.round(grams * 10) / 10, portion });
   }
-  return { items: out, minutes, meal };
+  return { items: out, minutes, meal, engine: 'rules' };
 }

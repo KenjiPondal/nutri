@@ -381,3 +381,4 @@ label.check.terms a{color:var(--text)}
 .ql-when .seg button{padding:.45rem .2rem;font-size:.78rem}
 .ql-when input[type=time]{width:auto;padding:.55rem .6rem}
 .time-tag{display:inline-block;font-size:.72rem;color:var(--dim);font-variant-numeric:tabular-nums;margin-right:.45rem}
+.ai-tag{font-size:.62rem;font-weight:700;letter-spacing:.06em;color:#1a1c0e;background:var(--accent);border-radius:4px;padding:.05rem .3rem;margin-left:.45rem;vertical-align:middle}

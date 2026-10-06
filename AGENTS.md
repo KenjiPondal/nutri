@@ -23,6 +23,7 @@ Before every commit, check that no secret from `server/.env` is staged.
 - **WHOOP refresh tokens are single-use.** Only ONE running copy (Render) may hold a WHOOP connection. Never connect WHOOP from local dev against the production DB, and never "Disconnect" (revoke) from a local copy.
 - Internal names `fullcoach` (local DB name, dev crypto label) are intentionally kept. Changing them breaks existing data or tokens.
 - Production requires `MONGODB_URI`, `JWT_SECRET`, `TOKEN_ENCRYPTION_KEY`. Sign-up is invite-only via `ALLOWED_EMAILS`.
+- Meal text parsing: AI (Gemini, `services/aiMeal.js`) when `GEMINI_API_KEY` is set, otherwise the rule-based fallback (`mealParser.js`). Nutrition numbers must always come from the DB, never from the model.
 - Coaching is rule-based (`server/src/services/coach.js`, `weekly.js`). Never show recovery-based insights on simulated WHOOP data.
 - Keep the medical disclaimer and the Open Food Facts (ODbL) / USDA attribution intact.
 - Security middleware lives in `server/src/middleware/security.js` (sanitizer, rate limits, CSP). The CSP allows jsDelivr and tessdata for label OCR; re-test OCR after any CSP change.

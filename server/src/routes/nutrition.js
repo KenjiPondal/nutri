@@ -5,6 +5,7 @@ import Product from '../models/Product.js';
 import { auth } from '../middleware/auth.js';
 import { entryFromProduct, MACROS } from '../services/entries.js';
 import { parseMeal, mealForHour } from '../services/mealParser.js';
+import { aiEnabled, aiParseMeal } from '../services/aiMeal.js';
 
 const router = express.Router();
 
@@ -87,7 +88,12 @@ router.post('/', auth, async (req, res) => {
 router.post('/parse', auth, async (req, res) => {
   const text = typeof req.body.text === 'string' ? req.body.text.trim() : '';
   if (!text) return res.status(400).json({ message: 'Describe what you ate' });
-  const r = await parseMeal(text, req.user.id);
+  let r;
+  if (aiEnabled()) {
+    try { r = await aiParseMeal(text, req.user.id); }
+    catch (e) { console.warn('[ai] meal parse failed, using rules:', e.message); }
+  }
+  r ||= await parseMeal(text, req.user.id);
   res.json({ ...r, suggestedMeal: r.meal || (r.minutes != null ? mealForHour(Math.floor(r.minutes / 60)) : null) });
 });
 

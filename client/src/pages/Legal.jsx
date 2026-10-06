@@ -44,6 +44,7 @@ export default function Legal() {
         <ul>
           <li><b>WHOOP</b>: we read your data through WHOOP's official API, only after you authorize it. Nutri is not affiliated with or endorsed by WHOOP.</li>
           <li><b>Open Food Facts</b>: when you search brands or scan an unknown barcode, the search text or barcode (nothing about you) is sent to Open Food Facts.</li>
+          <li><b>Google Gemini (AI)</b>: when you describe a meal in words, that text and the names of matching foods are sent to Google's Gemini API to understand it. Nothing else about you is sent. Nutrition values always come from the food databases, not the AI.</li>
           <li><b>Hosting</b>: Render (app) and MongoDB Atlas (database).</li>
         </ul>
       </section>

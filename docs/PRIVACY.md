@@ -12,6 +12,9 @@ Nutri is a nutrition-coaching app in private alpha. It is invite-only and used b
 - **Products you add:** product names, barcodes, and nutrition facts. Products you add are visible to other Nutri users.
 - **WHOOP data (only if you connect your WHOOP account):** recovery, heart rate variability, resting heart rate, SpO2, skin temperature, sleep, strain, energy expenditure, workouts, and your basic WHOOP profile (name and email).
 
+## Alpha testing log
+During the alpha, the text you type in “What did you eat?”, how Nutri interpreted it, and what you finally logged are stored for 30 days and visible to the developer, to improve meal recognition. Included in your export; deleted with your account.
+
 ## How we use it
 Only to show you your own data: dashboards, charts, and comparisons between your nutrition and your WHOOP metrics. We do **not** sell your data, share it with third parties, use it for advertising, or use it to train AI models.
 

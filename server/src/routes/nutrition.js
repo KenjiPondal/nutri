@@ -6,6 +6,7 @@ import { auth } from '../middleware/auth.js';
 import { entryFromProduct, MACROS } from '../services/entries.js';
 import { parseMeal, mealForHour } from '../services/mealParser.js';
 import { aiEnabled, aiParseMeal } from '../services/aiMeal.js';
+import ParseLog from '../models/ParseLog.js';
 
 const router = express.Router();
 
@@ -88,18 +89,28 @@ router.post('/', auth, async (req, res) => {
 router.post('/parse', auth, async (req, res) => {
   const text = typeof req.body.text === 'string' ? req.body.text.trim() : '';
   if (!text) return res.status(400).json({ message: 'Describe what you ate' });
-  let r;
+  const t0 = Date.now();
+  let r, aiError;
   if (aiEnabled()) {
     try { r = await aiParseMeal(text, req.user.id); }
-    catch (e) { console.warn('[ai] meal parse failed, using rules:', e.message); }
+    catch (e) { aiError = e.message.slice(0, 300); console.warn('[ai] meal parse failed, using rules:', e.message); }
   }
   r ||= await parseMeal(text, req.user.id);
-  res.json({ ...r, suggestedMeal: r.meal || (r.minutes != null ? mealForHour(Math.floor(r.minutes / 60)) : null) });
+  let logId = null;
+  try {
+    const log = await ParseLog.create({ user: req.user.id, text: text.slice(0, 1000), engine: r.engine, aiError, ms: Date.now() - t0,
+      minutes: r.minutes, meal: r.meal,
+      parsed: r.items.map(i => ({ food: i.food, brand: i.brand, kind: i.kind, grams: i.grams,
+        productId: i.product?._id ? String(i.product._id) : i.dish?._id ? String(i.dish._id) : undefined,
+        productName: i.product?.name || i.dish?.name || undefined })) });
+    logId = log._id;
+  } catch (e) { console.warn('[parselog]', e.message); }
+  res.json({ ...r, logId, suggestedMeal: r.meal || (r.minutes != null ? mealForHour(Math.floor(r.minutes / 60)) : null) });
 });
 
 // POST /api/nutrition/batch { items: [{ productId, quantity, portion }], mealType, date, hasTime, planned }
 router.post('/batch', auth, async (req, res) => {
-  const { items, mealType, date, hasTime, planned } = req.body;
+  const { items, mealType, date, hasTime, planned, parseLogId } = req.body;
   if (!['breakfast', 'lunch', 'dinner', 'snack'].includes(mealType)) return res.status(400).json({ message: 'Invalid meal' });
   if (!Array.isArray(items) || !items.length || items.length > 25) return res.status(400).json({ message: 'Add 1–25 foods' });
   const when = date ? new Date(date) : new Date();
@@ -114,6 +125,16 @@ router.post('/batch', auth, async (req, res) => {
       user: req.user.id, mealType, date: when, hasTime: hasTime === true, planned: Boolean(planned) });
   }
   const created = await NutritionEntry.insertMany(docs);
+  if (parseLogId && mongoose.isValidObjectId(parseLogId)) {
+    const log = await ParseLog.findOne({ _id: parseLogId, user: req.user.id });
+    if (log) {
+      const final = docs.map(d => ({ productId: String(d.product), productName: d.productName, grams: d.quantity, kind: 'food' }));
+      const before = log.parsed.filter(p => p.kind !== 'dish').map(p => `${p.productId}:${Math.round(p.grams)}`).sort().join();
+      const after = final.map(f => `${f.productId}:${Math.round(f.grams)}`).sort().join();
+      log.outcome = { logged: true, at: new Date(), items: final, changed: before !== after || Boolean(req.body.dishCount) };
+      await log.save().catch(() => {});
+    }
+  }
   Product.updateMany({ _id: { $in: [...products.keys()] } }, { $inc: { useCount: 1 } }).catch(() => {});
   res.status(201).json({ created: created.length });
 });

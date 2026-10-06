@@ -189,7 +189,7 @@ export async function candidatesFor({ food, brand }, ctx, { external = true } = 
   const want = tokens(`${food} ${brand || ''}`);
   const scored = ctx.history.map(p => {
     const have = new Set(tokens(`${p.name} ${p.brand || ''}`));
-    const hit = want.filter(w => have.has(w) || [...have].some(h => h.startsWith(w) || w.startsWith(h))).length;
+    const hit = want.filter(w => have.has(w) || (w.length >= 4 && [...have].some(h => h.length >= 4 && (h.startsWith(w) || w.startsWith(h))))).length;
     const brandHit = brand && tokens(brand).some(b => tokens(p.brand || p.name).includes(b));
     return [hit / Math.max(1, want.length) + (brandHit ? 0.5 : 0), p];
   }).filter(([s]) => s >= 0.5).sort((a, b) => b[0] - a[0]).map(([, p]) => p);

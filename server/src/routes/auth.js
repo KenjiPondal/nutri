@@ -9,13 +9,15 @@ import WeighIn from '../models/WeighIn.js';
 import WhoopDay from '../models/WhoopDay.js';
 import WhoopConnection from '../models/WhoopConnection.js';
 import Product from '../models/Product.js';
+import ParseLog from '../models/ParseLog.js';
 import { auth } from '../middleware/auth.js';
 import { authLimiter } from '../middleware/security.js';
 import { signToken } from '../utils/jwt.js';
 import { revoke } from '../services/whoopClient.js';
 
 const router = express.Router();
-const publicUser = (u) => ({ id: u._id, email: u.email, name: u.name, avatar: u.avatar, preferences: u.preferences });
+export const isAdmin = (email) => (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean).includes(String(email).toLowerCase());
+const publicUser = (u) => ({ id: u._id, email: u.email, name: u.name, avatar: u.avatar, preferences: u.preferences, isAdmin: isAdmin(u.email) });
 const str = (v, max = 200) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 const normEmail = (v) => str(v, 254).toLowerCase();
 
@@ -122,13 +124,13 @@ router.put('/preferences', auth, async (req, res) => {
 // GET /api/auth/export -> everything we store about you, as JSON (no password hash, no Whoop tokens)
 router.get('/export', auth, async (req, res) => {
   const u = req.user.id;
-  const [user, entries, dishes, objectives, weighIns, whoopDays, products] = await Promise.all([
+  const [user, entries, dishes, objectives, weighIns, whoopDays, products, parseLogs] = await Promise.all([
     User.findById(u, '-password -googleId').lean(), NutritionEntry.find({ user: u }).lean(), Dish.find({ user: u }).lean(),
     Objective.find({ user: u }).lean(), WeighIn.find({ user: u }).lean(), WhoopDay.find({ user: u }).lean(),
-    Product.find({ createdBy: u }).lean()
+    Product.find({ createdBy: u }).lean(), ParseLog.find({ user: u }).lean()
   ]);
   res.set('Content-Disposition', `attachment; filename="nutri-export-${new Date().toISOString().slice(0, 10)}.json"`);
-  res.json({ exportedAt: new Date(), user, entries, dishes, objectives, weighIns, whoopDays, productsYouAdded: products });
+  res.json({ exportedAt: new Date(), user, entries, dishes, objectives, weighIns, whoopDays, productsYouAdded: products, mealDescriptions: parseLogs });
 });
 
 // POST /api/auth/delete { password } -> permanently delete the account and all personal data
@@ -142,7 +144,7 @@ router.post('/delete', auth, authLimiter, async (req, res) => {
   if (conn) { try { await revoke(conn); } catch (e) { console.warn('[whoop] revoke on delete failed', e.message); } }
   await Promise.all([
     NutritionEntry.deleteMany({ user: u }), Dish.deleteMany({ user: u }), Objective.deleteMany({ user: u }),
-    WeighIn.deleteMany({ user: u }), WhoopDay.deleteMany({ user: u }), WhoopConnection.deleteMany({ user: u }),
+    WeighIn.deleteMany({ user: u }), ParseLog.deleteMany({ user: u }), WhoopDay.deleteMany({ user: u }), WhoopConnection.deleteMany({ user: u }),
     // Products you added stay in the shared food database, but are no longer linked to you
     Product.updateMany({ createdBy: u }, { $unset: { createdBy: 1 } })
   ]);

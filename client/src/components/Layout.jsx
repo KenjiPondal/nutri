@@ -32,6 +32,7 @@ export default function Layout() {
                 <Link to="/goals">Goals & targets</Link>
                 <Link to="/account">Account & data</Link>
                 <Link to="/legal">Legal & privacy</Link>
+                {user?.isAdmin && <Link to="/admin/meal-logs">Meal descriptions (admin)</Link>}
                 <button onClick={() => { logout(); navigate('/login'); }}>Log out</button>
               </div>
             </>

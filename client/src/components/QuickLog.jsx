@@ -28,7 +28,7 @@ export default function QuickLog({ date, onLogged }) {
     try {
       const r = (await api.post('/nutrition/parse', { text })).data;
       if (!r.items.length) { setError("I couldn't find any foods in that. Try e.g. “2 eggs, toast and a coffee”."); return; }
-      setItems(r.items); setEngine(r.engine);
+      setItems(r.items); setEngine(r.engine); setLogId(r.logId);
       if (r.minutes != null) setTime(toHM(r.minutes));
       setMeal(r.suggestedMeal || mealForHour(Number((r.minutes != null ? toHM(r.minutes) : time).split(':')[0])));
     } catch (e) { setError(errMsg(e)); }
@@ -42,6 +42,7 @@ export default function QuickLog({ date, onLogged }) {
     setItems(list => list.map((x, j) => (j === i ? { ...x, product: p, alternatives: [x.product, ...x.alternatives.filter(y => y !== a)].filter(Boolean) } : x)));
   };
   const [engine, setEngine] = useState(null);
+  const [logId, setLogId] = useState(null);
   const update = (i, patch) => setItems(list => list.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   const ready = items?.filter(i => (i.kind === 'dish') || (i.product && Number(i.grams) > 0)) || [];
   const total = ready.reduce((a, i) => a + (i.kind === 'food' ? kcalOf(i.product, Number(i.grams)) : 0), 0);
@@ -54,7 +55,7 @@ export default function QuickLog({ date, onLogged }) {
       const when = new Date(y, m - 1, d, hh, mm).toISOString();
       const planned = date > today();
       const foods = ready.filter(i => i.kind === 'food');
-      if (foods.length) await api.post('/nutrition/batch', { mealType: meal, date: when, hasTime: true, planned,
+      if (foods.length) await api.post('/nutrition/batch', { mealType: meal, date: when, hasTime: true, planned, parseLogId: logId, dishCount: ready.length - foods.length,
         items: foods.map(i => ({ productId: i.product._id, quantity: Number(i.grams), portion: i.portion })) });
       for (const i of ready.filter(x => x.kind === 'dish')) {
         await logDish(i.dish._id, { mealType: meal, portions: Number(i.portions) || 1, days: [{ date: when, planned, hasTime: true }] });

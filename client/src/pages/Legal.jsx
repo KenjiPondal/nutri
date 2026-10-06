@@ -35,6 +35,7 @@ export default function Legal() {
           <li><b>Why:</b> only to show you your own dashboards and coaching. We don't sell it, share it, advertise with it, or train AI on it.</li>
           <li><b>Security:</b> passwords are hashed (bcrypt); WHOOP access tokens are encrypted at rest; all traffic is HTTPS.</li>
           <li><b>Your control:</b> export everything or permanently delete your account any time from the account menu. Deleting also revokes Nutri's WHOOP access.</li>
+          <li><b>Alpha testing log:</b> while Nutri is in alpha, the text you type in “What did you eat?”, what Nutri understood and what you finally logged are kept for 30 days so the developer can improve meal recognition. It's included in your export and removed if you delete your account.</li>
           <li><b>Shared food database:</b> products you add (name, brand, barcode, nutrition) are visible to other Nutri users, without your name.</li>
         </ul>
       </section>

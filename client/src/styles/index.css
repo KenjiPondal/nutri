@@ -382,3 +382,8 @@ label.check.terms a{color:var(--text)}
 .ql-when input[type=time]{width:auto;padding:.55rem .6rem}
 .time-tag{display:inline-block;font-size:.72rem;color:var(--dim);font-variant-numeric:tabular-nums;margin-right:.45rem}
 .ai-tag{font-size:.62rem;font-weight:700;letter-spacing:.06em;color:#1a1c0e;background:var(--accent);border-radius:4px;padding:.05rem .3rem;margin-left:.45rem;vertical-align:middle}
+.plog{margin-top:.6rem}
+.plog-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.plog-text{margin:.5rem 0;font-weight:600}
+.plog-cols{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+.plog-cols p{margin:.15rem 0}

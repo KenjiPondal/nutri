@@ -10,6 +10,7 @@ import Meals from './pages/Meals';
 import Goals from './pages/Goals';
 import Legal from './pages/Legal';
 import Account from './pages/Account';
+import MealLogs from './pages/MealLogs';
 import Layout from './components/Layout';
 
 function ProtectedRoute({ children }) {
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="meals" element={<Meals />} />
           <Route path="goals" element={<Goals />} />
           <Route path="account" element={<Account />} />
+          <Route path="admin/meal-logs" element={<MealLogs />} />
           <Route path="products" element={<Products />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -37,3 +37,6 @@ services:
       # Optional: AI meal understanding (Google Gemini). Without it, the rule-based parser is used.
       - key: GEMINI_API_KEY
         sync: false
+      # Emails that can see the admin meal-description log (alpha debugging)
+      - key: ADMIN_EMAILS
+        sync: false

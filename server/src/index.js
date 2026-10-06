@@ -15,6 +15,7 @@ import whoopRoutes from './routes/whoop.js';
 import fuelRoutes from './routes/fuel.js';
 import dishRoutes from './routes/dishes.js';
 import objectiveRoutes from './routes/objectives.js';
+import adminRoutes from './routes/admin.js';
 import { startWhoopScheduler } from './services/whoopSync.js';
 import { whoopConfigured } from './services/whoopClient.js';
 import { sanitize, apiLimiter, securityHeaders } from './middleware/security.js';
@@ -50,6 +51,7 @@ app.use('/api/whoop', whoopRoutes);
 app.use('/api/fuel', fuelRoutes);
 app.use('/api/dishes', dishRoutes);
 app.use('/api/objectives', objectiveRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '0.1.0-alpha', db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' });

@@ -6,7 +6,8 @@ import NutritionEntry from '../models/NutritionEntry.js';
 import Dish from '../models/Dish.js';
 import { searchFoods } from './foodSearch.js';
 import Product from '../models/Product.js';
-import { searchOff, importFromOff } from './openFoodFacts.js';
+import { searchOff, searchOffBrand, importFromOff } from './openFoodFacts.js';
+import { detectBrand } from './brands.js';
 
 const WORD_NUM = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
   half: 0.5, quarter: 0.25, couple: 2, few: 3, un: 1, una: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, medio: 0.5, media: 0.5 };
@@ -157,7 +158,8 @@ export function splitFoods(text) {
     }
     // "hsn brand", "brand hsn", "marca hsn", "from hsn" -> brand
     let brand = null, rest = words.join(' ');
-    const bm = rest.match(/\b(?:brand|marca|by|from|de la marca)\s+([\p{L}\p{N}'&!.-]+)/u) || rest.match(/\b([\p{L}\p{N}'&!.-]+)\s+(?:brand|marca)\b/u);
+    // After "from/marca/brand", the brand runs to the end of the phrase ("from central lechera asturiana")
+    const bm = rest.match(/\b(?:brand|marca|by|from|de la marca)\s+([\p{L}\p{N}'&!.\s-]+)$/u) || rest.match(/\b([\p{L}\p{N}'&!.-]+)\s+(?:brand|marca)\b/u);
     if (bm) { brand = bm[1]; rest = rest.replace(bm[0], ' '); }
     const food = rest.replace(FILLER, ' ').replace(/[^\p{L}\p{N}\s%-]/gu, ' ').replace(/\s+/g, ' ').trim();
     if (food.length < 2) continue;
@@ -237,12 +239,14 @@ export async function candidatesFor({ food, brand }, ctx, { external = true } = 
   if (pref) { const best = await Product.findOne({ name: pref[1] }, LEAN).lean(); if (best) local.unshift(best); }
   let branded = [];
   if (brand) {
-    branded = await searchFoods(`${brand} ${q}`, ctx.userId, { boost: ctx.boost, limit: 4 });
-    if (external) branded = [...branded, ...(await searchOff(`${brand} ${translate(food)}`, 5))];
     const bt = tokens(brand);
-    const keep = (list) => list.filter(p => bt.some(b => tokens(`${p.brand || ''} ${p.name}`).includes(b)));
-    branded = keep(branded);
-    if (!branded.length && external) branded = keep(await searchOff(brand, 10));   // e.g. "hsn" alone
+    const isBrand = (p) => bt.some(b => tokens(`${p.brand || ''} ${p.name}`).includes(b));
+    // Local products of that brand (incl. ones people added), ranked by name overlap with the ORIGINAL words
+    const localBrand = (await searchFoods(`${brand} ${food}`, ctx.userId, { boost: ctx.boost, limit: 8 })).filter(isBrand);
+    const offBrand = external ? await searchOffBrand(brand, food, 6) : [];
+    const fw = tokens(food);
+    const overlap = (p) => { const n = tokens(p.name); return fw.filter(w => n.includes(w) || n.some(x => x.length >= 4 && w.length >= 4 && x.slice(0, 5) === w.slice(0, 5))).length; };
+    branded = [...localBrand, ...offBrand].sort((a, b) => overlap(b) - overlap(a));
   }
   let offGeneric = [];
   const head = stem(translate(food).split(' ').at(-1) || '');
@@ -250,7 +254,8 @@ export async function candidatesFor({ food, brand }, ctx, { external = true } = 
     offGeneric = await searchOff(translate(food), 5);                                 // "hsn evowhey": not in the local DB
   }
   const out = [], ids = new Set();
-  for (const p of [...scored.slice(0, 3), ...branded, ...local, ...offGeneric]) {
+  const order = brand && branded.length ? [...branded, ...scored.slice(0, 3), ...local] : [...scored.slice(0, 3), ...branded, ...local, ...offGeneric];
+  for (const p of order) {
     const id = p._id ? String(p._id) : `off:${p.barcode}`;
     if (!ids.has(id)) { ids.add(id); out.push(p); }
   }
@@ -260,7 +265,12 @@ export async function candidatesFor({ food, brand }, ctx, { external = true } = 
 /** Make sure a chosen Open Food Facts result is saved locally (so it has an _id). */
 export async function materialize(p) {
   if (!p || p._id || !p.barcode) return p;
-  const saved = await importFromOff(p.barcode);
+  let saved = await importFromOff(p.barcode);
+  if (!saved) {
+    // OFF product API down/slow: we already have the data from search, save that
+    const { external, cached, ...doc } = p;
+    saved = await Product.findOneAndUpdate({ barcode: p.barcode }, { $setOnInsert: { ...doc, source: 'openfoodfacts' } }, { upsert: true, new: true }).catch(() => null);
+  }
   return saved ? saved.toObject?.() ?? saved : null;
 }
 
@@ -275,6 +285,7 @@ export async function parseMeal(text, userId, ctx) {
   const { items, minutes, meal } = splitFoods(String(text).slice(0, 1000));
   const out = [];
   for (const it of items) {
+    if (!it.brand) { const d = await detectBrand(it.food); if (d && d.rest) { it.brand = d.brand; it.food = d.rest; } }
     const dish = findDish(it.food, ctx);
     if (dish) { out.push({ ...it, kind: 'dish', dish: { _id: dish._id, name: dish.name }, portions: it.quantity || 1 }); continue; }
     const cands = await candidatesFor(it, ctx);

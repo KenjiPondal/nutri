@@ -12,7 +12,8 @@
     "seed": "node src/utils/seed.js",
     "import:usda": "node --max-old-space-size=4096 src/utils/importUsda.js",
     "migrate": "node src/utils/migrate.js",
-    "eval:parser": "node src/utils/parserEval.js"
+    "eval:parser": "node src/utils/parserEval.js",
+    "eval:brands": "node src/utils/brandEval.js"
   },
   "dependencies": {
     "adm-zip": "^0.6.1",

@@ -23,6 +23,7 @@ Before every commit, check that no secret from `server/.env` is staged.
 2. Add each real failure to `server/test/parser.golden.json` (expected product regex + gram range).
 3. Fix general causes in `server/src/services/mealParser.js` / `foodSearch.js` (not one-off hacks), then run
    `npm run eval:parser --workspace=server`. All sentences must pass before committing.
+Brand accuracy: `npm run eval:brands --workspace=server` (400 sentences built from real Open Food Facts products; baseline 93% right brand / 67% exact product). Don't let it drop.
 Gemini stays off during the alpha (no GEMINI_API_KEY); the rule-based parser is the product.
 
 ## Rules that matter

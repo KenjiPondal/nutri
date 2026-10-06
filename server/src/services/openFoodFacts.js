@@ -1,6 +1,7 @@
 // Open Food Facts: branded products (ODbL). Lookups send only the search text / barcode.
 import Product from '../models/Product.js';
 import { groupFromOffTags } from '../utils/foodQuality.js';
+import { brandSlug } from './brands.js';
 
 const OFF = 'https://world.openfoodfacts.org';
 const UA = { 'User-Agent': 'Nutri/0.1-alpha (nutrition coaching app)' };
@@ -75,4 +76,36 @@ export async function searchOff(q, limit = 10) {
     return products.filter(p => p.code && (p.product_name || p.product_name_en) && p.nutriments?.['energy-kcal_100g'] != null)
       .slice(0, limit).map(p => ({ ...fromOff(p), external: true, cached: have.has(p.code) }));
   } catch { return []; }
+}
+
+const fold = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const words = (s) => fold(s).split(/[^a-z0-9]+/).filter(w => w.length > 2);
+
+/**
+ * Products of one brand that best match the food words (any language, untranslated).
+ * OFF requires every word to match, so we also query each word alone and the brand's top products, then rank ourselves.
+ */
+export async function searchOffBrand(brand, foodText, limit = 6) {
+  const tag = brandSlug(brand);
+  const ws = [...new Set(words(foodText))].slice(0, 4);
+  const queries = [ws.join(' '), ...ws, ''].filter((q, i, a) => a.indexOf(q) === i);
+  const run = async (q) => {
+    try {
+      const d = await offFetch(`https://search.openfoodfacts.org/search?q=${encodeURIComponent(`brands_tags:"${tag}" ${q}`.trim())}&page_size=${q ? 20 : 50}&fields=${OFF_FIELDS}`);
+      return d.hits || [];
+    } catch { return []; }
+  };
+  const seen = new Set(), hits = [];
+  for (const h of (await Promise.all(queries.map(run))).flat()) {
+    if (!h.code || seen.has(h.code) || !(h.product_name || h.product_name_en) || h.nutriments?.['energy-kcal_100g'] == null) continue;
+    seen.add(h.code); hits.push(h);
+  }
+  const score = (h) => {
+    const name = new Set(words(`${h.product_name || ''} ${h.product_name_en || ''}`));
+    let s = 0;
+    for (const w of ws) if (name.has(w)) s += 2; else if ([...name].some(n => n.length >= 4 && w.length >= 4 && (n.startsWith(w.slice(0, 5)) || w.startsWith(n.slice(0, 5))))) s += 1;
+    return s - name.size * 0.05; // shorter, more specific names win ties
+  };
+  return hits.map(h => [score(h), h]).filter(([sc]) => ws.length === 0 || sc > 0).sort((a, b) => b[0] - a[0])
+    .slice(0, limit).map(([, h]) => ({ ...fromOff(h), brand: (Array.isArray(h.brands) ? h.brands[0] : String(h.brands || '').split(',')[0])?.trim() || brand, external: true }));
 }

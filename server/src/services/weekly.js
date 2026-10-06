@@ -77,7 +77,8 @@ export async function weeklyReview(userId, tz) {
     ['upf', 'more than 30% ultra-processed', (d) => (d.result.stats.upfShare ?? 0) > 0.3, true],
     ['under', 'a big deficit (25%+ under target)', (d) => !d.inProgress && d.result.stats.ratio < 0.75, true],
     ['protein', 'protein goal hit', (d) => d.result.totals.protein >= 0.9 * (ctx.prefs.proteinGoal ?? 150), false],
-    ['plants', '5+ servings of plants', (d) => d.result.stats.plantServings >= 5, false]
+    ['plants', '5+ servings of plants', (d) => d.result.stats.plantServings >= 5, false],
+    ['late', 'a last meal after 9 pm', (d) => d.timing && d.timing.timedShare >= 0.6 && d.timing.last >= 21, true]
   ].map(([key, label, test, bad]) => ({ key, label, bad, p: pattern(all.slice(0, -1), ctx.whoop.days, test) }))
     .filter(c => c.p && Math.abs(c.p.diff) >= 5)
     .sort((a, b) => Math.abs(b.p.diff) - Math.abs(a.p.diff));
@@ -86,6 +87,17 @@ export async function weeklyReview(userId, tz) {
     insights.push({ kind: 'pattern',
       title: `After days with ${c.label}, recovery averaged ${r(c.p.yes)}%`,
       body: `vs ${r(c.p.no)}% after other days (${c.p.n} days of data). A pattern, not proof, but worth noticing.` });
+  }
+
+  // 3b) Meal timing this week vs last
+  const avgOf = (ds, f) => { const xs = ds.map(d => d.timing).filter(t => t && t.timedShare >= 0.6 && t.occasions >= 2).map(f); return xs.length >= 3 ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
+  const hh = (h) => `${Math.floor(h)}:${String(Math.round((h % 1) * 60)).padStart(2, '0')}`;
+  const lastThis = avgOf(thisDays, t => t.last), lastPrev = avgOf(lastDays, t => t.last);
+  const winThis = avgOf(thisDays, t => t.window);
+  if (lastThis != null) {
+    if (lastPrev != null && lastThis - lastPrev >= 1) insights.push({ kind: 'fix', title: `Eating later: last meal around ${hh(lastThis)}, was ${hh(lastPrev)}`, body: 'Later meals often show up as lower HRV and recovery. Try to finish eating 2–3 hours before bed.' });
+    else if (lastThis >= 21.5) insights.push({ kind: 'tip', title: `Last meal around ${hh(lastThis)} on average`, body: 'Finishing 2–3 hours before bed usually helps sleep quality.' });
+    else if (winThis != null) insights.push({ kind: 'win', title: `Steady routine: ~${Math.round(winThis)} h eating window`, body: `Typically from ${hh(avgOf(thisDays, t => t.first))} to ${hh(lastThis)}. Consistent timing helps energy and sleep.` });
   }
 
   // 4) Objectives that are behind
@@ -105,6 +117,7 @@ export async function weeklyReview(userId, tz) {
     thisWeek: { avgScore: week.avgScore && r(week.avgScore), avgRecovery: week.avgRecovery && r(week.avgRecovery), avgHrv: week.avgHrv && r(week.avgHrv), logged: week.logged, upfShare: week.upfShare },
     lastWeek: { avgScore: prev.avgScore && r(prev.avgScore), avgRecovery: prev.avgRecovery && r(prev.avgRecovery), avgHrv: prev.avgHrv && r(prev.avgHrv), logged: prev.logged, upfShare: prev.upfShare },
     whoopSource: ctx.whoop.source,
+    timing: lastThis != null ? { avgFirst: avgOf(thisDays, t => t.first), avgLast: lastThis, avgWindow: winThis } : null,
     objectives: objectives.map(({ raw, ...o }) => o),
     insights: insights.slice(0, 5)
   };

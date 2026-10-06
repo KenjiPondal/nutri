@@ -1,6 +1,7 @@
 import express from 'express';
 import Product from '../models/Product.js';
 import { auth } from '../middleware/auth.js';
+import { searchFoods } from '../services/foodSearch.js';
 import { groupFromOffTags, FOOD_GROUP_KEYS } from '../utils/foodQuality.js';
 
 const router = express.Router();
@@ -68,51 +69,15 @@ router.get('/barcode/:code', auth, async (req, res) => {
   res.json(product);
 });
 
-const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-/** Relevance for plain-food search: simple, whole foods whose main noun is the query win. */
-function rank(p, words, userId, headNoun = false) {
-  const name = p.name.toLowerCase();
-  const segs = name.split(',').map(x => x.trim());
-  let score = 0;
-  words.forEach((w, i) => {
-    // In "wheat noodles" the last word is the food; weigh it double when not every word can match.
-    const k = headNoun && i === words.length - 1 ? 2 : 1;
-    if (segs[0] === w || segs[1] === w) score += 4 * k;              // "Rice, white…", "Beef, steak, …"
-    else if (segs.slice(0, 2).some(sg => sg.split(/[\s-]/).includes(w))) score += 2 * k;
-    else if (name.includes(w)) score += 0.5 * k;
-  });
-  if (/\b(raw|cooked|boiled|whole|plain|fresh|grilled|baked|roasted)\b/.test(name)) score += 1.5;   // plain preparations
-  if (name.startsWith(words[0])) score += 1.5;
-  score += ({ 1: 3, 2: 1, 3: 0, 4: -3 })[p.novaGroup] ?? 0;          // plain foods first
-  if (String(p.createdBy) === String(userId)) score += 6;           // your own products
-  score += Math.min(6, Math.log2((p.useCount || 0) + 1) * 2);       // frequently logged
-  if (p.source === 'seed') score += 2;
-  if (/^[^a-z,]{3,},/.test(p.name)) score -= 5;                       // "T.G.I. FRIDAY'S, ...", "DENNY'S, ..."
-  if (/fast foods?|restaurant|school lunch|\bnfs\b|ns as to|babyfood/i.test(p.name)) score -= 2;
-  score -= name.length / 30;
-  return score;
-}
-
 // Local search: every query word must prefix-match a word of the name (or brand). Results are ranked.
 router.get('/', auth, async (req, res) => {
   const q = String(req.query.search || '').trim().slice(0, 80);
   if (!q) {
-    // No query: the user's most-used foods, then recently added
+    // No query: the most-used foods, then the seed list
     const recent = await Product.find({ useCount: { $gt: 0 } }).sort({ useCount: -1 }).limit(20);
     return res.json(recent.length ? recent : await Product.find({ source: 'seed' }).sort({ name: 1 }).limit(30));
   }
-  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
-  const res_ = words.map(w => new RegExp(`(^|[\\s,(-])${escapeRe(w)}`, 'i'));
-  const match = (list) => list.map(re => ({ $or: [{ name: re }, { brand: re }] }));
-  let candidates = await Product.find({ $and: match(res_) }).limit(500).lean();
-  // Nothing matches every word ("wheat noodles")? Fall back to any word; ranking puts the best overlap first.
-  let fallback = false;
-  if (!candidates.length && words.length > 1) { fallback = true; candidates = await Product.find({ $or: match(res_) }).limit(800).lean(); }
-  const seen = new Set();
-  const ranked = candidates.map(p => [rank(p, words, req.user.id, fallback), p]).sort((a, b) => b[0] - a[0])
-    .map(([, p]) => p).filter(p => !seen.has(p.name.toLowerCase()) && seen.add(p.name.toLowerCase())).slice(0, 30);
-  res.json(ranked);
+  res.json(await searchFoods(q, req.user.id));
 });
 
 // Branded products from Open Food Facts (separate request so local results render instantly).

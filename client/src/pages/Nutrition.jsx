@@ -6,6 +6,7 @@ import QuantityInput from '../components/QuantityInput';
 import DishEditor from '../components/DishEditor';
 import LogDish from '../components/LogDish';
 import Ring from '../components/Ring';
+import QuickLog from '../components/QuickLog';
 import { Sheet, DishCard } from './Meals';
 import { getFuelDay, fuelColor, fuelVerdict } from '../services/fuel';
 import { listDishes, noonISO } from '../services/dishes';
@@ -13,6 +14,7 @@ import { listDishes, noonISO } from '../services/dishes';
 const MEALS = ['breakfast', 'lunch', 'dinner', 'snack'];
 const sum = (arr, k) => Math.round(arr.reduce((s, e) => s + (e[k] || 0), 0));
 const r1 = (n) => Math.round(n * 10) / 10;
+const hm = (d) => new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 /** Entries of one meal -> rows: single foods, or one row per logged dish (its ingredients share dish.group). */
 function toRows(items) {
@@ -55,8 +57,9 @@ export default function Nutrition() {
 
   const saveFood = async () => {
     try {
+      const isToday = date === today();
       await api.post('/nutrition', { productId: product._id, quantity: amount.grams, portion: amount.text,
-        mealType: adding, planned, date: noonISO(date) });
+        mealType: adding, planned, date: isToday ? new Date().toISOString() : noonISO(date), hasTime: isToday && !planned });
       closeAdd(); load();
     } catch (e) { setError(errMsg(e)); }
   };
@@ -92,6 +95,8 @@ export default function Nutrition() {
       {error && <div className="error">{error}</div>}
       {notice && <div className="info" onClick={() => setNotice('')}>{notice}</div>}
 
+      <QuickLog date={date} onLogged={(n) => { load(); setNotice(`Logged ${n} item${n === 1 ? '' : 's'}.`); }} />
+
       {fuel && date <= today() && (
         <Link to="/" className="fuel-strip">
           <Ring value={fuel.score} color={fuelColor(fuel.score)} size={52} stroke={4}>
@@ -113,7 +118,7 @@ export default function Nutrition() {
       </div>
 
       {MEALS.map(meal => {
-        const items = entries.filter(e => e.mealType === meal);
+        const items = entries.filter(e => e.mealType === meal).sort((a, b) => new Date(a.date) - new Date(b.date));
         return (
           <section key={meal} className="card meal">
             <div className="meal-head">
@@ -124,7 +129,7 @@ export default function Nutrition() {
               {toRows(items).map(row => row.type === 'food' ? (
                 <li key={row.e._id} className={row.e.planned ? 'planned' : ''}>
                   <div>
-                    <strong>{row.e.productName}</strong> <NovaChip nova={row.e.novaGroup} />
+                    {row.e.hasTime && <span className="time-tag">{hm(row.e.date)}</span>}<strong>{row.e.productName}</strong> <NovaChip nova={row.e.novaGroup} />
                     <div className="muted small">{row.e.portionText ? `${row.e.portionText} · ` : ''}{Math.round(row.e.quantity)}{row.e.unit} · {Math.round(row.e.calories)} kcal · P {row.e.protein} · C {row.e.carbs} · F {row.e.fat}</div>
                   </div>
                   <div className="row-inline">
@@ -135,7 +140,7 @@ export default function Nutrition() {
               ) : (
                 <li key={row.group} className={`dish-row ${row.items.every(e => e.planned) ? 'planned' : ''}`}>
                   <div className="dish-row-main" onClick={() => setOpen(o => ({ ...o, [row.group]: !o[row.group] }))}>
-                    <strong>{row.dish.name}</strong> <span className="chip meal-chip">meal</span>
+                    {row.items[0].hasTime && <span className="time-tag">{hm(row.items[0].date)}</span>}<strong>{row.dish.name}</strong> <span className="chip meal-chip">meal</span>
                     <div className="muted small">{row.dish.amount} · {sum(row.items, 'calories')} kcal · P {sum(row.items, 'protein')} · C {sum(row.items, 'carbs')} · F {sum(row.items, 'fat')}
                       <span className="dim"> · {open[row.group] ? 'hide' : `${row.items.length} ingredients`}</span></div>
                     {open[row.group] && (

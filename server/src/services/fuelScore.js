@@ -35,6 +35,7 @@ export function toItem(e) {
     sodium: e.sodium ?? fromP('sodium') ?? null,
     grams: ['g', 'ml'].includes(e.unit || 'g') ? e.quantity : 0,
     group,
+    at: e.hasTime ? e.date : null,
     nova: novaOf({ novaGroup: e.novaGroup ?? p?.novaGroup, foodGroup: group })
   };
 }

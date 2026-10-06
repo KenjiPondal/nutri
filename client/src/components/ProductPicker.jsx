@@ -10,9 +10,9 @@ export const NovaChip = ({ nova }) => (nova ? <span className={`chip nova${nova}
  * Pick a product by search or barcode scan. Unknown barcodes -> create (with label photo).
  * Search includes Open Food Facts results; picking one imports it into our database.
  */
-export default function ProductPicker({ onPick, extraTab }) {
+export default function ProductPicker({ onPick, extraTab, initialQuery = '' }) {
   const [mode, setMode] = useState('search'); // search | scan | create
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(initialQuery);
   const [results, setResults] = useState([]);
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(false);

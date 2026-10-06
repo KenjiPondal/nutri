@@ -21,7 +21,7 @@ const PROTEIN_IDEAS = [
   { min: 0, text: '200 g Greek yogurt (~20 g)' }
 ];
 
-export function coach({ result, items, target, whoopDay, proteinGoal, inProgress }) {
+export function coach({ result, items, target, whoopDay, proteinGoal, inProgress, timing }) {
   if (result.score == null) {
     return [{ kind: 'tip', title: inProgress ? 'Nothing logged yet' : 'No food logged', body: 'Log meals to get your Fuel Score and coaching.' }];
   }
@@ -86,6 +86,21 @@ export function coach({ result, items, target, whoopDay, proteinGoal, inProgress
   }
 
   const fixes = out.filter(o => o.weight >= 1).sort((a, b) => b.weight - a.weight).slice(0, 3);
+
+  // Meal timing (only when most of the day's food was logged with a time)
+  const hh = (h) => `${Math.floor(h)}:${String(Math.round((h % 1) * 60)).padStart(2, '0')}`;
+  if (timing && timing.timedShare >= 0.6 && timing.occasions >= 2) {
+    if (timing.lateShare >= 0.3) {
+      fixes.push({ kind: 'fix', key: 'timing', title: `${pct(timing.lateShare)} of calories after 9 pm`,
+        body: 'Big late meals tend to raise night-time heart rate and cut into deep sleep. Try moving some of it to lunch or an earlier dinner.' });
+    } else if (!inProgress && timing.longestGap >= 6 && timing.gapFrom < 18) {
+      fixes.push({ kind: 'tip', key: 'timing', title: `${Math.round(timing.longestGap)} h without food (${hh(timing.gapFrom)}–${hh(timing.gapFrom + timing.longestGap)})`,
+        body: 'Long daytime gaps often lead to overeating later. A protein snack in between keeps energy steadier.' });
+    } else if (!inProgress && timing.window >= 14) {
+      fixes.push({ kind: 'tip', key: 'timing', title: `${Math.round(timing.window)}-hour eating window`,
+        body: `First bite ${hh(timing.first)}, last ${hh(timing.last)}. A shorter window (about 10–12 h) with no late snacking often helps sleep.` });
+    }
+  }
 
   // Context from Whoop
   const extra = [];

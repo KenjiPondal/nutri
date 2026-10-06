@@ -360,3 +360,24 @@ label.check.terms a{color:var(--text)}
 .label-scan.open{background:var(--surface-2);border-radius:14px;padding:.9rem;display:flex;flex-direction:column;gap:.5rem}
 .label-scan.open textarea{background:var(--surface);font-size:16px}
 .label-scan .row{justify-content:space-between;margin-top:0}
+
+/* quick log (describe a meal) */
+.quicklog{margin-top:0;margin-bottom:.9rem}
+.quicklog textarea{background:var(--surface-2);resize:none;font-size:16px}
+.ql-actions{display:flex;justify-content:space-between;align-items:center;gap:.8rem;margin-top:.6rem}
+.ql-head{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;margin-bottom:.4rem}
+.ql-items{list-style:none;padding:0;margin:0 0 .8rem}
+.ql-items li{display:flex;gap:.6rem;align-items:flex-start;justify-content:space-between;padding:.7rem 0;border-top:1px solid var(--border)}
+.ql-items li:first-child{border-top:0}
+.ql-items li.missing strong{color:var(--fair)}
+.ql-main{flex:1;min-width:0}
+.ql-name{background:none;border:0;padding:0;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.ql-amt{display:flex;align-items:center;gap:.2rem;flex:none}
+.ql-alts{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem}
+.ql-alts button{border:0;border-radius:999px;background:var(--surface-2);color:var(--muted);font:inherit;font-size:.72rem;padding:.25rem .6rem;cursor:pointer}
+.ql-when{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.4rem}
+.ql-when .seg{flex:1 1 100%}
+.ql-when .seg{flex:1}
+.ql-when .seg button{padding:.45rem .2rem;font-size:.78rem}
+.ql-when input[type=time]{width:auto;padding:.55rem .6rem}
+.time-tag{display:inline-block;font-size:.72rem;color:var(--dim);font-variant-numeric:tabular-nums;margin-right:.45rem}

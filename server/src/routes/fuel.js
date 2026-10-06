@@ -23,6 +23,7 @@ router.get('/day', async (req, res) => {
     totals: d.result.totals,
     components: d.result.components,
     stats: d.result.stats,
+    timing: d.timing,
     insights: coach({ ...d, proteinGoal: ctx.prefs.proteinGoal ?? 150 })
   });
 });

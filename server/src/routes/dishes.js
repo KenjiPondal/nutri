@@ -108,7 +108,7 @@ router.post('/:id/log', async (req, res) => {
       if (!ing.product) continue; // product was deleted
       docs.push({
         ...entryFromProduct(ing.product, ing.grams * factor),
-        user: req.user.id, mealType, date, planned: Boolean(day.planned),
+        user: req.user.id, mealType, date, planned: Boolean(day.planned), hasTime: day.hasTime === true,
         dish: { id: d._id, name: d.name, group, amount }
       });
     }

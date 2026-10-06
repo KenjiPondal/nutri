@@ -89,6 +89,11 @@ API: `GET /api/fuel/day?date=&tz=`, `GET /api/fuel/history?days=&tz=`.
 - **Brands:** searched separately in Open Food Facts (`GET /api/products/external`). It uses their newer search API and falls back to the legacy one; picking a result imports it.
 - Unknown barcode: take a photo of the nutrition label. Tesseract.js reads it in the browser and `client/src/utils/labelParser.js` parses EU/US/Spanish labels, including the common OCR mistake of reading "g" as "9". The user reviews the values and saves; the product is shared (source `label`, unverified) so the next scan of that barcode is instant.
 
+## Describe-a-meal logging & meal timing
+- `POST /api/nutrition/parse { text }` reads plain text ("2 eggs, toast and a coffee at 8am", English or basic Spanish) into foods, amounts, time and meal. It's rule-based (`services/mealParser.js`), with no AI. It prefers foods you've logged before, your saved meals, and a list of everyday defaults.
+- `POST /api/nutrition/batch` logs the confirmed items with the real time (`hasTime`).
+- Timing analysis (`mealTiming` in `services/days.js`): eating window, longest daytime gap, and share of calories after 9 pm. It feeds the daily coach, the weekly review and a late-meal → next-day recovery pattern (real Whoop data only).
+
 ## Saved meals & meal prep (`/api/dishes`)
 - A dish stores the ingredients for the whole batch, plus how many `portions` it makes and an optional `cookedWeight`.
 - `POST /api/dishes/:id/log { mealType, portions | grams, days: [{ date, planned }] }` logs it on up to 31 days at once. Future days are saved as planned.

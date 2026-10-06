@@ -4,6 +4,7 @@ import NutritionEntry from '../models/NutritionEntry.js';
 import Product from '../models/Product.js';
 import { auth } from '../middleware/auth.js';
 import { entryFromProduct, MACROS } from '../services/entries.js';
+import { parseMeal, mealForHour } from '../services/mealParser.js';
 
 const router = express.Router();
 
@@ -57,7 +58,7 @@ router.get('/summary', auth, async (req, res) => {
 // Macros are computed server-side from the product so clients can't submit inconsistent data.
 router.post('/', auth, async (req, res) => {
   try {
-    const { productId, quantity, mealType, date, notes, planned, portion } = req.body;
+    const { productId, quantity, mealType, date, notes, planned, portion, hasTime } = req.body;
     const qty = Number(quantity);
     if (!(qty > 0)) return res.status(400).json({ message: 'Quantity must be positive' });
     let data;
@@ -74,12 +75,41 @@ router.post('/', auth, async (req, res) => {
     }
     const entry = await NutritionEntry.create({
       ...data, user: req.user.id, quantity: qty, mealType,
-      date: date ? new Date(date) : new Date(), notes, planned: Boolean(planned)
+      date: date ? new Date(date) : new Date(), notes, planned: Boolean(planned), hasTime: hasTime === true
     });
     res.status(201).json(entry);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
+});
+
+// POST /api/nutrition/parse { text } -> what we understood, for the user to confirm
+router.post('/parse', auth, async (req, res) => {
+  const text = typeof req.body.text === 'string' ? req.body.text.trim() : '';
+  if (!text) return res.status(400).json({ message: 'Describe what you ate' });
+  const r = await parseMeal(text, req.user.id);
+  res.json({ ...r, suggestedMeal: r.meal || (r.minutes != null ? mealForHour(Math.floor(r.minutes / 60)) : null) });
+});
+
+// POST /api/nutrition/batch { items: [{ productId, quantity, portion }], mealType, date, hasTime, planned }
+router.post('/batch', auth, async (req, res) => {
+  const { items, mealType, date, hasTime, planned } = req.body;
+  if (!['breakfast', 'lunch', 'dinner', 'snack'].includes(mealType)) return res.status(400).json({ message: 'Invalid meal' });
+  if (!Array.isArray(items) || !items.length || items.length > 25) return res.status(400).json({ message: 'Add 1–25 foods' });
+  const when = date ? new Date(date) : new Date();
+  if (Number.isNaN(when.getTime())) return res.status(400).json({ message: 'Invalid date' });
+  const ids = items.map(i => i.productId).filter(id => mongoose.isValidObjectId(id));
+  const products = new Map((await Product.find({ _id: { $in: ids } })).map(p => [String(p._id), p]));
+  const docs = [];
+  for (const i of items) {
+    const p = products.get(String(i.productId)); const qty = Number(i.quantity);
+    if (!p || !(qty > 0 && qty < 5000)) return res.status(400).json({ message: 'Each food needs a valid product and amount' });
+    docs.push({ ...entryFromProduct(p, qty), portionText: typeof i.portion === 'string' ? i.portion.slice(0, 60) : undefined,
+      user: req.user.id, mealType, date: when, hasTime: hasTime === true, planned: Boolean(planned) });
+  }
+  const created = await NutritionEntry.insertMany(docs);
+  Product.updateMany({ _id: { $in: [...products.keys()] } }, { $inc: { useCount: 1 } }).catch(() => {});
+  res.status(201).json({ created: created.length });
 });
 
 // A logged dish is several entries sharing dish.group. Act on them together.

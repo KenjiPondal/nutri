@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const NutritionEntrySchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   date: { type: Date, required: true, default: Date.now },
+  hasTime: { type: Boolean, default: false }, // true when `date` holds the real time eaten (used for meal-timing analysis)
   mealType: { type: String, enum: ['breakfast', 'lunch', 'dinner', 'snack'], required: true },
   product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
   productName: { type: String, required: true },

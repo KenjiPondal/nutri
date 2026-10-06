@@ -39,28 +39,57 @@ const EACH = [
   [/chicken breast/, 170], [/steak/, 200], [/burger|hamburger/, 230], [/sausage/, 75], [/fillet|filet/, 150],
   [/potato/, 170], [/tomato/, 120], [/carrot/, 60], [/onion/, 110], [/pizza/, 110], [/yogurt|yoghurt/, 150], [/date/, 8], [/almond/, 1.2]
 ];
+// Typical serving when the person gives no amount ("butter", "a beer"). Checked before generic portions.
+const SERVING = [
+  [/whey|protein (shake|powder)|evowhey|^protein$/, 30], [/peanut butter|almond butter|nut butter|nutella/, 30],
+  [/^butter$/, 10], [/honey|miel|jam|mermelada|syrup/, 20], [/walnut|almond|cashew|pistachio|peanuts|hazelnut|nuts|nueces|frutos secos/, 30], [/parmesan|parmigiano/, 10], [/cheese|queso|feta|mozzarella|cheddar|brie|goat cheese/, 30], [/bacon/, 30], [/olive oil|^oil$/, 10],
+  [/beer|cerveza/, 330], [/cola|coke|soda|soft drink/, 330], [/juice|zumo/, 250], [/wine|vino/, 150], [/^milk$/, 200],
+  [/chips|crisps/, 30], [/chocolate/, 45], [/cereal/, 40], [/oatmeal|porridge|^oats?$/, 50],
+  [/salad|ensalada/, 300], [/tomato sauce|pasta sauce|marinara/, 120], [/soup|sopa/, 300], [/sandwich|bocadillo/, 200],
+  [/pizza/, 220], [/sushi/, 200], [/^rice$|arroz/, 180], [/^pasta$|spaghetti/, 200], [/beans|lentils|chickpeas/, 150],
+  [/^fries$|french fries/, 120], [/burger/, 230], [/^tea$|green tea|black tea/, 240]
+];
+// Weight of one unit for specific foods ("1 cup of oats" is 80 g, not 200)
+const UNIT_FOR = [
+  [/oat|cereal|granola|muesli/, { cup: 80, bowl: 40, scoop: 40 }], [/rice|arroz/, { cup: 160, bowl: 250 }],
+  [/pizza/, { slice: 110, piece: 110 }], [/bread|toast|pan\b/, { slice: 30, piece: 30 }], [/cheese|queso/, { slice: 20 }],
+  [/sushi/, { piece: 30 }], [/whey|protein/, { scoop: 30 }], [/milk|juice|beer|coffee|tea/, { cup: 240, glass: 250, can: 330 }],
+  [/chocolate|bar\b/, { bar: 45, piece: 10 }]
+];
+
 const FILLER = /\b(a|an|i|i've|ive|i'd|had|have|ate|eaten|eat|drank|drink|for|some|of|the|my|with|de|del|la|el|los|las|comí|comi|tomé|tome|bebí|un poco|about|around|approx|approximately|like|also|then|plus|today|yesterday)\b/g;
 // Spanish -> English for common foods (the food database is English)
 const ES = { huevos: 'egg', huevo: 'egg', 'plátano': 'banana', platano: 'banana', manzana: 'apple', naranja: 'orange', pollo: 'chicken',
-  'pechuga de pollo': 'chicken breast', pechuga: 'chicken breast', ternera: 'beef', carne: 'beef', cerdo: 'pork', pescado: 'fish', salmón: 'salmon', salmon: 'salmon', 'atún': 'tuna', atun: 'tuna',
+  'pechuga de pollo': 'chicken breast', picada: 'ground', galletas: 'cookies', galleta: 'cookie', miel: 'honey', picado: 'ground', cerdo: 'pork', salmón: 'salmon', cerveza: 'beer', zumo: 'juice', ensalada: 'salad', pechuga: 'chicken breast', ternera: 'beef', carne: 'beef', cerdo: 'pork', pescado: 'fish', salmón: 'salmon', salmon: 'salmon', 'atún': 'tuna', atun: 'tuna',
   arroz: 'rice', 'arroz integral': 'brown rice', pasta: 'pasta', fideos: 'noodles', pan: 'bread', tostada: 'toast', avena: 'oats', leche: 'milk',
   yogur: 'yogurt', queso: 'cheese', 'aceite de oliva': 'olive oil', aceite: 'olive oil', aguacate: 'avocado', tomate: 'tomato', lechuga: 'lettuce',
   ensalada: 'salad', patata: 'potato', patatas: 'potato', papas: 'potato', 'brócoli': 'broccoli', brocoli: 'broccoli', zanahoria: 'carrot',
   lentejas: 'lentils', garbanzos: 'chickpeas', almendras: 'almonds', nueces: 'walnuts', 'café': 'coffee', cafe: 'coffee', cerveza: 'beer', vino: 'wine', agua: 'water' };
-export const translate = (food) => ES[food] || food.split(' ').map(w => ES[w] || w).join(' ');
+const ES_PHRASES = [[/carne picada (de )?cerdo/, 'ground pork'], [/carne picada (de )?ternera|carne picada/, 'ground beef'],
+  [/queso fresco/, 'queso fresco'], [/tostadas?/, 'toast'], [/batido de proteinas?|batido de proteínas?/, 'protein shake']];
+export const translate = (food) => {
+  let f = food;
+  for (const [re, en] of ES_PHRASES) f = f.replace(re, en);
+  return ES[f] || f.split(' ').map(w => ES[w] || w).join(' ');
+};
 
 // Everyday words -> the plain food people almost always mean (exact USDA/seed names)
 const PREFER = [
   [/^eggs?$/, /^(Whole Egg|Egg, whole, raw, fresh)$/], [/^(fried )?eggs?$/, /^Egg, whole, cooked, fried$/],
   [/^(boiled|hard boiled) eggs?$/, /^Egg, whole, cooked, hard-boiled$/], [/^scrambled eggs?$/, /^Egg, whole, cooked, scrambled$/],
   [/^rice$|^white rice$/, /^Rice, white, long-grain, regular, (enriched, )?cooked/], [/^brown rice$/, /^Rice, brown, long-grain, cooked/],
-  [/^toast$/, /^Bread, white, commercially prepared, toasted$/], [/^bread$/, /^Bread, white wheat$/],
+  [/^toasts?$/, /^Bread, white, commercially prepared, toasted$/], [/^bread$/, /^Bread, white wheat$/],
   [/^(whole ?wheat|wholemeal|brown) (bread|toast)$/, /^(Whole Wheat Bread|Bread, whole-wheat, commercially prepared)$/],
   [/^steak$|^beef steak$/, /^Beef, steak, sirloin, lean only eaten$/], [/^chicken$/, /^Chicken Breast \(cooked\)$/],
   [/^milk$/, /^Milk, whole$|^Milk, whole, 3.25% milkfat/], [/^oats?$|^oatmeal$|^porridge$/, /^Rolled Oats$/],
   [/^pasta$|^spaghetti$/, /^Pasta \(cooked\)$/], [/^potato(es)?$/, /^Potatoes, boiled, cooked without skin, flesh, without salt$/],
   [/^coffee$/, /^Coffee, brewed/], [/^salmon$/, /^Salmon \(cooked\)$/], [/^tuna$/, /^Fish, tuna, light, canned in water, drained solids/],
-  [/^(greek )?yogh?urt$/, /^Greek Yogurt 2%$/], [/^cheese$/, /^Cheese, cheddar, sharp, sliced$/], [/^butter$/, /^Butter, salted$/]
+  [/^(greek )?yogh?urt$/, /^Greek Yogurt 2%$/], [/^salmon( fillet| filet| steak)?$/, /^Salmon \(cooked\)$/],
+  [/^(whey|whey protein|protein)( shake| powder)?$|^protein shake$/, /^Whey Protein Powder$/], [/^(potato )?(chips|crisps)$/, /^Potato Chips$/],
+  [/^beer$/, /^Beer$|^Alcoholic beverage, beer, regular, all$/], [/^(chocolate|chocolate bar)$/, /^Milk Chocolate$/],
+  [/^(coke|cola|soda)$/, /^Cola$/], [/^bacon$/, /^Bacon \(cooked\)$/], [/^honey$/, /^Honey$/], [/^(french )?(fries|fry)$/, /^French Fries \(fast food\)$/], [/^parmesan( cheese)?$/, /^Cheese, parmesan, grated$/],
+  [/^(cereal|cereals)$/, /^Cereal, corn flakes, plain$/],
+  [/^lentils?$/, /^Lentils \(cooked\)$/], [/^(white )?rice cooked$/, /^Rice, white, long-grain, regular, (enriched, )?cooked/], [/^cheese$/, /^Cheese, cheddar, sharp, sliced$/], [/^butter$/, /^Butter, salted$/]
 ];
 
 const MEAL_WORDS = [[/\bbreakfast|desayun/, 'breakfast'], [/\blunch|almuerzo|comida\b/, 'lunch'], [/\bdinner|supper|cena/, 'dinner'], [/\bsnack|merienda|tentempi/, 'snack']];
@@ -91,7 +120,7 @@ export function parseTime(text) {
   return null;
 }
 
-const stem = (w) => (w.length <= 3 ? w : w.endsWith('ies') ? w.slice(0, -3) : w.endsWith('oes') ? w.slice(0, -2)
+const stem = (w) => (w.length <= 3 ? w : w.endsWith('ies') ? w.slice(0, -1) : w.endsWith('oes') ? w.slice(0, -2)
   : w.endsWith('es') && /(ch|sh|x|ss)es$/.test(w) ? w.slice(0, -2) : w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w);
 
 /** Split free text into food chunks with quantity/unit. Pure function. */
@@ -144,20 +173,27 @@ export function gramsFor(item, product) {
   if (['g', 'kg', 'ml', 'l', 'oz', 'lb'].includes(item.unit)) return { grams: q * u[2], portion: null };
   const portions = (product?.portions || []).filter(p => p.grams > 0 && /[a-z]/i.test(p.label));
   const find = (re) => portions.find(p => re.test(p.label));
+  const foodEn = translate(item.food);
   if (item.unit) {
+    const special = UNIT_FOR.find(([re, units]) => re.test(foodEn) && units[item.unit]);
+    if (special) return { grams: q * special[1][item.unit], portion: `${+q.toFixed(2)} ${item.unit}` };
     const p = find(new RegExp(`\\b${item.unit}`, 'i')) || (item.unit === 'slice' && find(/slice/i));
     if (p) return { grams: q * p.grams, portion: `${q === 1 ? '' : `${+q.toFixed(2)} × `}${p.label}` };
     return { grams: q * u[2], portion: `${+q.toFixed(2)} ${item.unit}` };
   }
   if (item.quantity == null) {
     // "rice", "a steak" without a number: one typical serving
+    const serving = SERVING.find(([re]) => re.test(foodEn));
+    if (serving) return { grams: serving[1], portion: null };
     const each = EACH.find(([re]) => re.test(translate(item.food)));
     if (each) return { grams: each[1], portion: '1' };
     const p = find(/\b(1 serving|1 cup|1 medium|1 steak|1 breast|1 fillet)/i);
     if (p && p.grams >= 40 && p.grams <= 400) return { grams: p.grams, portion: p.label };
     return { grams: 100, portion: null };
   }
-  // Counted items: "2 eggs", "3 cookies"
+  // Counted items: "2 eggs", "3 cookies", "2 beers"
+  const serving1 = SERVING.find(([re]) => re.test(foodEn)) ;
+  if (serving1 && !EACH.some(([re]) => re.test(foodEn))) return { grams: q * serving1[1], portion: `${+q.toFixed(2)} × serving` };
   const each = EACH.find(([re]) => re.test(translate(item.food)));
   const p = find(/\b(1 )?(medium|large|whole|egg|slice|piece|breast|steak|fillet|cookie|item)\b/i);
   const g = each ? each[1] : p && p.grams <= 400 ? p.grams : 100;
@@ -194,7 +230,8 @@ export async function candidatesFor({ food, brand }, ctx, { external = true } = 
     return [hit / Math.max(1, want.length) + (brandHit ? 0.5 : 0), p];
   }).filter(([s]) => s >= 0.5).sort((a, b) => b[0] - a[0]).map(([, p]) => p);
 
-  const q = translate(food).split(' ').map(stem).join(' ');
+  const DESCRIPTORS = /\b(fillet|filet|fillets|piece|pieces|portion|bar|homemade|casero|plain|stir[ -]?fry|stir[ -]?fried|salteado|grilled|a la plancha)\b/g;
+  const q = translate(food).replace(DESCRIPTORS, ' ').trim().split(/\s+/).map(stem).join(' ') || translate(food);
   const local = await searchFoods(q, ctx.userId, { boost: ctx.boost, limit: 6 });
   const pref = PREFER.find(([re]) => re.test(translate(food)));
   if (pref) { const best = await Product.findOne({ name: pref[1] }, LEAN).lean(); if (best) local.unshift(best); }
@@ -206,11 +243,14 @@ export async function candidatesFor({ food, brand }, ctx, { external = true } = 
     const keep = (list) => list.filter(p => bt.some(b => tokens(`${p.brand || ''} ${p.name}`).includes(b)));
     branded = keep(branded);
     if (!branded.length && external) branded = keep(await searchOff(brand, 10));   // e.g. "hsn" alone
-  } else if (external && !scored.length && (!local.length || !tokens(local[0].name).includes(stem(translate(food).split(' ').at(-1) || '')))) {
-    branded = await searchOff(translate(food), 5);                                    // "hsn evowhey": not in the local DB
+  }
+  let offGeneric = [];
+  const head = stem(translate(food).split(' ').at(-1) || '');
+  if (external && !brand && !pref && !scored.length && (!local.length || !tokens(local[0].name).some(t => t.startsWith(head) || head.startsWith(t)))) {
+    offGeneric = await searchOff(translate(food), 5);                                 // "hsn evowhey": not in the local DB
   }
   const out = [], ids = new Set();
-  for (const p of [...scored.slice(0, 3), ...branded, ...local]) {
+  for (const p of [...scored.slice(0, 3), ...branded, ...local, ...offGeneric]) {
     const id = p._id ? String(p._id) : `off:${p.barcode}`;
     if (!ids.has(id)) { ids.add(id); out.push(p); }
   }

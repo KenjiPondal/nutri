@@ -1,0 +1,994 @@
+[
+ {
+  "text": "2 eggs, a slice of toast and 30g of almonds at 8am",
+  "time": "08:00",
+  "meal": "breakfast",
+  "items": [
+   {
+    "match": "^(Whole Egg|Egg, whole)",
+    "grams": [
+     90,
+     120
+    ]
+   },
+   {
+    "match": "Bread.*toasted|toast",
+    "grams": [
+     20,
+     40
+    ]
+   },
+   {
+    "match": "^Almonds",
+    "grams": [
+     30,
+     30
+    ]
+   }
+  ]
+ },
+ {
+  "text": "steak with wheat noodles and yakisoba sauce for dinner",
+  "meal": "dinner",
+  "items": [
+   {
+    "match": "^Beef, steak",
+    "grams": [
+     150,
+     250
+    ]
+   },
+   {
+    "match": "^Noodles",
+    "grams": [
+     120,
+     250
+    ]
+   },
+   {
+    "match": "[Yy]akisoba|sauce",
+    "grams": [
+     15,
+     50
+    ]
+   }
+  ]
+ },
+ {
+  "text": "200g chicken breast, 1 cup brown rice, broccoli at 13:30",
+  "time": "13:30",
+  "meal": "lunch",
+  "items": [
+   {
+    "match": "^Chicken Breast|^Chicken, broiler.*breast",
+    "grams": [
+     200,
+     200
+    ]
+   },
+   {
+    "match": "^Rice, brown",
+    "grams": [
+     150,
+     220
+    ]
+   },
+   {
+    "match": "^Broccoli",
+    "grams": [
+     60,
+     150
+    ]
+   }
+  ]
+ },
+ {
+  "text": "dos huevos y un pl\u00e1tano a las 9",
+  "time": "09:00",
+  "meal": "breakfast",
+  "items": [
+   {
+    "match": "^(Whole Egg|Egg, whole)",
+    "grams": [
+     90,
+     120
+    ]
+   },
+   {
+    "match": "^Banana",
+    "grams": [
+     100,
+     130
+    ]
+   }
+  ]
+ },
+ {
+  "text": "half an avocado + 2 tbsp olive oil",
+  "items": [
+   {
+    "match": "^Avocado",
+    "grams": [
+     60,
+     110
+    ]
+   },
+   {
+    "match": "^Olive [Oo]il",
+    "grams": [
+     25,
+     32
+    ]
+   }
+  ]
+ },
+ {
+  "text": "greek yogurt with blueberries and a banana",
+  "items": [
+   {
+    "match": "Greek|[Yy]ogurt, Greek",
+    "grams": [
+     120,
+     250
+    ]
+   },
+   {
+    "match": "^Blueberries",
+    "grams": [
+     50,
+     150
+    ]
+   },
+   {
+    "match": "^Banana",
+    "grams": [
+     100,
+     130
+    ]
+   }
+  ]
+ },
+ {
+  "text": "250g ground pork",
+  "items": [
+   {
+    "match": "^Pork, ground|ground pork",
+    "grams": [
+     250,
+     250
+    ]
+   }
+  ]
+ },
+ {
+  "text": "carne picada de cerdo 200g",
+  "items": [
+   {
+    "match": "^Pork, ground|ground pork",
+    "grams": [
+     200,
+     200
+    ]
+   }
+  ]
+ },
+ {
+  "text": "a coffee with milk",
+  "items": [
+   {
+    "match": "^Coffee",
+    "grams": [
+     150,
+     300
+    ]
+   },
+   {
+    "match": "^Milk",
+    "grams": [
+     20,
+     250
+    ]
+   }
+  ]
+ },
+ {
+  "text": "oatmeal with a banana and peanut butter",
+  "items": [
+   {
+    "match": "Oats|Oatmeal|Cereals, oats",
+    "grams": [
+     40,
+     250
+    ]
+   },
+   {
+    "match": "^Banana",
+    "grams": [
+     100,
+     130
+    ]
+   },
+   {
+    "match": "[Pp]eanut butter",
+    "grams": [
+     15,
+     40
+    ]
+   }
+  ]
+ },
+ {
+  "text": "1.5 cups of oats with 250 ml milk at 7:15 am",
+  "time": "07:15",
+  "items": [
+   {
+    "match": "Oats|Cereals, oats",
+    "grams": [
+     100,
+     200
+    ]
+   },
+   {
+    "match": "^Milk",
+    "grams": [
+     250,
+     260
+    ]
+   }
+  ]
+ },
+ {
+  "text": "salmon fillet with sweet potato and spinach",
+  "items": [
+   {
+    "match": "^Salmon|Fish, salmon",
+    "grams": [
+     100,
+     220
+    ]
+   },
+   {
+    "match": "[Ss]weet [Pp]otato",
+    "grams": [
+     100,
+     250
+    ]
+   },
+   {
+    "match": "^Spinach",
+    "grams": [
+     30,
+     150
+    ]
+   }
+  ]
+ },
+ {
+  "text": "pasta with tomato sauce and parmesan",
+  "items": [
+   {
+    "match": "^Pasta|^Spaghetti",
+    "grams": [
+     100,
+     300
+    ]
+   },
+   {
+    "match": "[Tt]omato.*sauce|[Ss]auce.*tomato|[Pp]asta sauce",
+    "grams": [
+     50,
+     200
+    ]
+   },
+   {
+    "match": "[Pp]armesan",
+    "grams": [
+     5,
+     30
+    ]
+   }
+  ]
+ },
+ {
+  "text": "two slices of whole wheat bread with butter",
+  "items": [
+   {
+    "match": "[Ww]hole.?[Ww]heat|whole-wheat",
+    "grams": [
+     50,
+     80
+    ]
+   },
+   {
+    "match": "^Butter",
+    "grams": [
+     5,
+     20
+    ]
+   }
+  ]
+ },
+ {
+  "text": "a can of coke",
+  "items": [
+   {
+    "match": "[Cc]ola|[Cc]oke|[Cc]arbonated",
+    "grams": [
+     330,
+     360
+    ]
+   }
+  ]
+ },
+ {
+  "text": "glass of orange juice",
+  "items": [
+   {
+    "match": "[Oo]range juice",
+    "grams": [
+     200,
+     260
+    ]
+   }
+  ]
+ },
+ {
+  "text": "3 scrambled eggs and bacon",
+  "items": [
+   {
+    "match": "scrambled",
+    "grams": [
+     120,
+     180
+    ]
+   },
+   {
+    "match": "[Bb]acon",
+    "grams": [
+     15,
+     60
+    ]
+   }
+  ]
+ },
+ {
+  "text": "chicken caesar salad",
+  "items": [
+   {
+    "match": "[Cc]aesar|[Cc]hicken",
+    "grams": [
+     150,
+     450
+    ]
+   }
+  ]
+ },
+ {
+  "text": "a handful of almonds",
+  "items": [
+   {
+    "match": "^Almonds",
+    "grams": [
+     20,
+     40
+    ]
+   }
+  ]
+ },
+ {
+  "text": "apple",
+  "items": [
+   {
+    "match": "^Apple",
+    "grams": [
+     130,
+     220
+    ]
+   }
+  ]
+ },
+ {
+  "text": "I had rice and beans for lunch",
+  "meal": "lunch",
+  "items": [
+   {
+    "match": "^Rice",
+    "grams": [
+     100,
+     250
+    ]
+   },
+   {
+    "match": "[Bb]eans",
+    "grams": [
+     80,
+     250
+    ]
+   }
+  ]
+ },
+ {
+  "text": "tuna sandwich",
+  "items": [
+   {
+    "match": "[Tt]una",
+    "grams": [
+     80,
+     300
+    ]
+   }
+  ]
+ },
+ {
+  "text": "2 tortillas with chicken and cheese at 20:00",
+  "time": "20:00",
+  "meal": "dinner",
+  "items": [
+   {
+    "match": "[Tt]ortilla",
+    "grams": [
+     50,
+     110
+    ]
+   },
+   {
+    "match": "[Cc]hicken",
+    "grams": [
+     80,
+     200
+    ]
+   },
+   {
+    "match": "[Cc]heese",
+    "grams": [
+     15,
+     60
+    ]
+   }
+  ]
+ },
+ {
+  "text": "medio aguacate y una tostada",
+  "items": [
+   {
+    "match": "^Avocado",
+    "grams": [
+     60,
+     110
+    ]
+   },
+   {
+    "match": "toast|Bread",
+    "grams": [
+     20,
+     40
+    ]
+   }
+  ]
+ },
+ {
+  "text": "arroz con pollo",
+  "items": [
+   {
+    "match": "^Rice|[Rr]ice",
+    "grams": [
+     100,
+     250
+    ]
+   },
+   {
+    "match": "[Cc]hicken",
+    "grams": [
+     80,
+     200
+    ]
+   }
+  ]
+ },
+ {
+  "text": "lentejas 300g",
+  "items": [
+   {
+    "match": "^Lentils",
+    "grams": [
+     300,
+     300
+    ]
+   }
+  ]
+ },
+ {
+  "text": "protein shake hsn brand",
+  "items": [
+   {
+    "brand": "HSN",
+    "grams": [
+     20,
+     45
+    ]
+   }
+  ]
+ },
+ {
+  "text": "1 scoop hsn evowhey with 300ml milk",
+  "items": [
+   {
+    "brand": "HSN",
+    "grams": [
+     25,
+     35
+    ]
+   },
+   {
+    "match": "^Milk",
+    "grams": [
+     300,
+     310
+    ]
+   }
+  ]
+ },
+ {
+  "text": "whey protein shake",
+  "items": [
+   {
+    "match": "[Ww]hey|[Pp]rotein",
+    "grams": [
+     20,
+     45
+    ]
+   }
+  ]
+ },
+ {
+  "text": "a beer and some chips",
+  "items": [
+   {
+    "match": "[Bb]eer|[Aa]lcoholic",
+    "grams": [
+     300,
+     360
+    ]
+   },
+   {
+    "match": "[Cc]hips|[Cc]risps",
+    "grams": [
+     20,
+     80
+    ]
+   }
+  ]
+ },
+ {
+  "text": "one large egg",
+  "items": [
+   {
+    "match": "^(Whole Egg|Egg, whole)",
+    "grams": [
+     45,
+     60
+    ]
+   }
+  ]
+ },
+ {
+  "text": "100 g de queso fresco",
+  "items": [
+   {
+    "match": "[Cc]heese|[Qq]ueso",
+    "grams": [
+     100,
+     100
+    ]
+   }
+  ]
+ },
+ {
+  "text": "sushi 8 pieces",
+  "items": [
+   {
+    "match": "[Ss]ushi",
+    "grams": [
+     150,
+     300
+    ]
+   }
+  ]
+ },
+ {
+  "text": "a cup of white rice and grilled chicken thigh",
+  "items": [
+   {
+    "match": "^Rice, white",
+    "grams": [
+     150,
+     210
+    ]
+   },
+   {
+    "match": "[Cc]hicken.*thigh",
+    "grams": [
+     60,
+     200
+    ]
+   }
+  ]
+ },
+ {
+  "text": "pizza 2 slices",
+  "items": [
+   {
+    "match": "^Pizza",
+    "grams": [
+     150,
+     280
+    ]
+   }
+  ]
+ },
+ {
+  "text": "a bowl of cereal with milk",
+  "items": [
+   {
+    "match": "[Cc]ereal",
+    "grams": [
+     30,
+     80
+    ]
+   },
+   {
+    "match": "^Milk",
+    "grams": [
+     100,
+     300
+    ]
+   }
+  ]
+ },
+ {
+  "text": "chocolate bar",
+  "items": [
+   {
+    "match": "[Cc]hocolate",
+    "grams": [
+     30,
+     60
+    ]
+   }
+  ]
+ },
+ {
+  "text": "green tea",
+  "items": [
+   {
+    "match": "[Tt]ea",
+    "grams": [
+     200,
+     300
+    ]
+   }
+  ]
+ },
+ {
+  "text": "2 bananas and a kiwi at 11",
+  "time": "11:00",
+  "items": [
+   {
+    "match": "^Banana",
+    "grams": [
+     200,
+     260
+    ]
+   },
+   {
+    "match": "^Kiwi",
+    "grams": [
+     60,
+     90
+    ]
+   }
+  ]
+ },
+ {
+  "text": "cena: salm\u00f3n con patatas",
+  "meal": "dinner",
+  "items": [
+   {
+    "match": "^Salmon|Fish, salmon",
+    "grams": [
+     100,
+     220
+    ]
+   },
+   {
+    "match": "^Potato",
+    "grams": [
+     100,
+     300
+    ]
+   }
+  ]
+ },
+ {
+  "text": "for breakfast I had porridge with honey and a coffee",
+  "meal": "breakfast",
+  "items": [
+   {
+    "match": "Oats|Oatmeal|Cereals, oats",
+    "grams": [
+     40,
+     250
+    ]
+   },
+   {
+    "match": "^Honey",
+    "grams": [
+     10,
+     30
+    ]
+   },
+   {
+    "match": "^Coffee",
+    "grams": [
+     150,
+     300
+    ]
+   }
+  ]
+ },
+ {
+  "text": "3 eggs omelette with spinach and feta",
+  "items": [
+   {
+    "match": "[Ee]gg|[Oo]melet",
+    "grams": [
+     130,
+     200
+    ]
+   },
+   {
+    "match": "^Spinach",
+    "grams": [
+     20,
+     120
+    ]
+   },
+   {
+    "match": "[Ff]eta",
+    "grams": [
+     15,
+     50
+    ]
+   }
+  ]
+ },
+ {
+  "text": "150g turkey breast and a salad",
+  "items": [
+   {
+    "match": "[Tt]urkey",
+    "grams": [
+     150,
+     150
+    ]
+   },
+   {
+    "match": "[Ss]alad|[Ll]ettuce",
+    "grams": [
+     80,
+     350
+    ]
+   }
+  ]
+ },
+ {
+  "text": "a protein bar",
+  "items": [
+   {
+    "match": "[Pp]rotein|[Bb]ar",
+    "grams": [
+     40,
+     70
+    ]
+   }
+  ]
+ },
+ {
+  "text": "un vaso de leche y dos galletas",
+  "items": [
+   {
+    "match": "^Milk",
+    "grams": [
+     200,
+     260
+    ]
+   },
+   {
+    "match": "[Cc]ookie|[Bb]iscuit",
+    "grams": [
+     15,
+     50
+    ]
+   }
+  ]
+ },
+ {
+  "text": "burger and fries at 9pm",
+  "time": "21:00",
+  "meal": "dinner",
+  "items": [
+   {
+    "match": "[Bb]urger|[Hh]amburger|Cheeseburger",
+    "grams": [
+     150,
+     300
+    ]
+   },
+   {
+    "match": "[Ff]ries|French",
+    "grams": [
+     80,
+     200
+    ]
+   }
+  ]
+ },
+ {
+  "text": "2 tbsp of hummus with carrots",
+  "items": [
+   {
+    "match": "[Hh]ummus",
+    "grams": [
+     25,
+     35
+    ]
+   },
+   {
+    "match": "^Carrot",
+    "grams": [
+     40,
+     150
+    ]
+   }
+  ]
+ },
+ {
+  "text": "skyr 170g and 20g granola",
+  "items": [
+   {
+    "match": "[Ss]kyr|[Yy]ogurt",
+    "grams": [
+     170,
+     170
+    ]
+   },
+   {
+    "match": "[Gg]ranola",
+    "grams": [
+     20,
+     20
+    ]
+   }
+  ]
+ },
+ {
+  "text": "grilled salmon 180 g with quinoa",
+  "items": [
+   {
+    "match": "^Salmon|Fish, salmon",
+    "grams": [
+     180,
+     180
+    ]
+   },
+   {
+    "match": "[Qq]uinoa",
+    "grams": [
+     100,
+     250
+    ]
+   }
+  ]
+ },
+ {
+  "text": "an orange and some walnuts",
+  "items": [
+   {
+    "match": "^Orange",
+    "grams": [
+     100,
+     180
+    ]
+   },
+   {
+    "match": "[Ww]alnut",
+    "grams": [
+     15,
+     40
+    ]
+   }
+  ]
+ },
+ {
+  "text": "desayuno: avena con pl\u00e1tano",
+  "meal": "breakfast",
+  "items": [
+   {
+    "match": "Oats|Oatmeal|Cereals, oats",
+    "grams": [
+     40,
+     250
+    ]
+   },
+   {
+    "match": "^Banana",
+    "grams": [
+     100,
+     130
+    ]
+   }
+  ]
+ },
+ {
+  "text": "glass of red wine",
+  "items": [
+   {
+    "match": "[Ww]ine",
+    "grams": [
+     120,
+     200
+    ]
+   }
+  ]
+ },
+ {
+  "text": "2 slices of pepperoni pizza",
+  "items": [
+   {
+    "match": "[Pp]izza",
+    "grams": [
+     150,
+     280
+    ]
+   }
+  ]
+ },
+ {
+  "text": "tofu stir fry with rice",
+  "items": [
+   {
+    "match": "[Tt]ofu",
+    "grams": [
+     80,
+     250
+    ]
+   },
+   {
+    "match": "[Rr]ice",
+    "grams": [
+     100,
+     250
+    ]
+   }
+  ]
+ },
+ {
+  "text": "cottage cheese 200g with pineapple",
+  "items": [
+   {
+    "match": "[Cc]ottage",
+    "grams": [
+     200,
+     200
+    ]
+   },
+   {
+    "match": "[Pp]ineapple",
+    "grams": [
+     60,
+     200
+    ]
+   }
+  ]
+ }
+]

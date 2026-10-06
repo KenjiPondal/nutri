@@ -18,6 +18,13 @@ Before every commit, check that no secret from `server/.env` is staged.
 - `server/`: Express + Mongoose, ESM. Entry `server/src/index.js`.
 - Local dev: `npm run dev` (API :5000, web :5173 with an `/api` proxy). Node and MongoDB binaries live in `~/.local/node` and `~/.local/mongodb`.
 
+## Parser review loop ("review the parser" / "check the logs")
+1. Read real meal descriptions: `MONGODB_URI=<atlas> node server/src/utils/parseLogs.js 7 --issues` (outcome.changed = the user fixed it).
+2. Add each real failure to `server/test/parser.golden.json` (expected product regex + gram range).
+3. Fix general causes in `server/src/services/mealParser.js` / `foodSearch.js` (not one-off hacks), then run
+   `npm run eval:parser --workspace=server`. All sentences must pass before committing.
+Gemini stays off during the alpha (no GEMINI_API_KEY); the rule-based parser is the product.
+
 ## Rules that matter
 - **Numeric inputs:** always use `client/src/components/DecimalInput.jsx`, never `<input type="number">`. iOS keypads type "," in many regions.
 - **WHOOP refresh tokens are single-use.** Only ONE running copy (Render) may hold a WHOOP connection. Never connect WHOOP from local dev against the production DB, and never "Disconnect" (revoke) from a local copy.

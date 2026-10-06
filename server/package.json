@@ -11,7 +11,8 @@
     "start": "node src/index.js",
     "seed": "node src/utils/seed.js",
     "import:usda": "node --max-old-space-size=4096 src/utils/importUsda.js",
-    "migrate": "node src/utils/migrate.js"
+    "migrate": "node src/utils/migrate.js",
+    "eval:parser": "node src/utils/parserEval.js"
   },
   "dependencies": {
     "adm-zip": "^0.6.1",
